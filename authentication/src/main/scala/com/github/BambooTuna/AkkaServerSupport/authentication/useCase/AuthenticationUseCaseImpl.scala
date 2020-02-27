@@ -1,9 +1,6 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.useCase
 
-import com.github.BambooTuna.AkkaServerSupport.authentication.dao.{
-  UserCredentialsDao,
-  UserCredentialsDaoImpl
-}
+import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDaoImpl
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   PasswordInitializationRequestJsonImpl,
   SignInRequestJsonImpl,
