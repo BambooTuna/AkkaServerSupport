@@ -1,7 +1,8 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.model
 
 case class EncryptedPasswordImpl(encryptedPass: String)
-    extends EncryptedPassword {
+    extends EncryptedPassword
+    with io.getquill.Embedded {
 
   //TODO
   override protected def encryption(plainPass: ValueType): ValueType = plainPass

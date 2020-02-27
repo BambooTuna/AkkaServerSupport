@@ -1,6 +1,6 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.useCase
 
-import cats.data.{Kleisli, OptionT}
+import cats.data.OptionT
 import cats.Monad
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
@@ -8,40 +8,38 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   SignInRequestJson,
   SignUpRequestJson
 }
-import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredentials
 
 trait AuthenticationUseCase {
-  // Like Future, Task
-  type IO[_]
-  type DBSession
-  type M[O] = Kleisli[IO, DBSession, O]
 
-  type Id
-  type U <: UserCredentials
+  val userCredentialsDao: UserCredentialsDao
 
-  type SignUpRequest <: SignUpRequestJson[U]
-  type SignInRequest <: SignInRequestJson[U]
-  type PasswordInitializationRequest <: PasswordInitializationRequestJson[U]
+  type M[O] = userCredentialsDao.M[O]
+  type Id = userCredentialsDao.Id
+  type SignInId = userCredentialsDao.SignInId
+  type Record = userCredentialsDao.Record
 
-  protected val userCredentialsDao: UserCredentialsDao[M, Id, U#SignInId, U]
+  type SignUpRequest <: SignUpRequestJson[Record]
+  type SignInRequest <: SignInRequestJson[Record]
+  type PasswordInitializationRequest <: PasswordInitializationRequestJson[
+    Record]
 
-  def signUp(json: SignUpRequest): M[U] =
+  def signUp(json: SignUpRequest): M[Record] =
     userCredentialsDao.insert(json.createUserCredentials)
 
-  def signIn(json: SignInRequest)(implicit F: Monad[M]): OptionT[M, U] =
+  def signIn(json: SignInRequest)(implicit F: Monad[M]): OptionT[M, Record] =
     userCredentialsDao
-      .resolveBySignInId(json.signInId)
+      .resolveBySignInId(json.signInId.asInstanceOf[SignInId])
       .filter(_.doAuthenticationByPassword(json.signInPass))
 
   def passwordInitialization(json: PasswordInitializationRequest)(
-      implicit F: Monad[M]): OptionT[M, U#SignInPass#ValueType] =
+      implicit F: Monad[M]): OptionT[M, Record#SignInPass#ValueType] =
     for {
       u <- userCredentialsDao
-        .resolveBySignInId(json.signInId)
+        .resolveBySignInId(json.signInId.asInstanceOf[SignInId])
         .filter(_.initializeAuthentication(json))
-      (newCredentials, newPlainPassword) = u.initPassword
-      _ <- OptionT.liftF[M, U] {
-        userCredentialsDao.update(newCredentials.asInstanceOf[U])
+      (newCredentials, newPlainPassword) = u.initPassword()
+      _ <- OptionT.liftF[M, Record] {
+        userCredentialsDao.update(newCredentials.asInstanceOf[Record])
       }
     } yield newPlainPassword
 
