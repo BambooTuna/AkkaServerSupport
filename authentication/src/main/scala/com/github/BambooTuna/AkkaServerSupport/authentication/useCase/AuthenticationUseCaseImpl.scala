@@ -1,21 +1,19 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.useCase
 
 import cats.data.OptionT
-import com.github.BambooTuna.AkkaServerSupport.authentication.dao.{
-  UserCredentialsDao,
-  UserCredentialsDaoImpl
-}
+import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
-  PasswordInitializationRequestJson,
   PasswordInitializationRequestJsonImpl,
-  SignInRequestJson,
   SignInRequestJsonImpl,
-  SignUpRequestJson,
   SignUpRequestJsonImpl
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredentialsImpl
 
-class AuthenticationUseCaseImpl[IO, DBSession] extends AuthenticationUseCase {
+class AuthenticationUseCaseImpl[IOIn[_], DBSessionIn]
+    extends AuthenticationUseCase {
+  override type IO[_] = IOIn[_]
+  override type DBSession = DBSessionIn
+
   override type Id = String
   override type U = UserCredentialsImpl
   override type SignUpRequest = SignUpRequestJsonImpl

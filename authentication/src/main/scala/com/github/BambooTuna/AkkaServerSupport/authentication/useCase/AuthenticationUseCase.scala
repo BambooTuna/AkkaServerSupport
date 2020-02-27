@@ -1,7 +1,7 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.useCase
 
 import cats.data.{Kleisli, OptionT}
-import cats.{Functor, Monad}
+import cats.Monad
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   PasswordInitializationRequestJson,
