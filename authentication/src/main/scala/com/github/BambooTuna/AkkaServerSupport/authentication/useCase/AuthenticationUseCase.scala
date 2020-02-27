@@ -1,7 +1,7 @@
-package com.github.BambooTuna.AkkaServerSupport.authentication
+package com.github.BambooTuna.AkkaServerSupport.authentication.useCase
 
-import cats.{Functor, Monad}
 import cats.data.{Kleisli, OptionT}
+import cats.{Functor, Monad}
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   PasswordInitializationRequestJson,
@@ -9,7 +9,6 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   SignUpRequestJson
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredentials
-import monix.eval.Task
 
 trait AuthenticationUseCase {
   // Like Future, Task
@@ -20,7 +19,7 @@ trait AuthenticationUseCase {
   type Id
   type U <: UserCredentials
 
-  protected val userCredentialsDao: UserCredentialsDao[M[U], Id, U#SignInId, U]
+  protected val userCredentialsDao: UserCredentialsDao[M, Id, U#SignInId, U]
 
   def signUp(json: SignUpRequestJson[U]): M[U] =
     userCredentialsDao.insert(json.createUserCredentials)

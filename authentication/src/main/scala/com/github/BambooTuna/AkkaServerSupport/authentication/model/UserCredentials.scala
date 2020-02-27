@@ -11,7 +11,8 @@ trait UserCredentials {
 
   def doAuthenticationByPassword(inputPass: Any): Boolean
 
-  def initializeAuthentication(json: PasswordInitializationRequestJson[_]): Boolean
+  def initializeAuthentication(
+      json: PasswordInitializationRequestJson[_]): Boolean
 
   def changePassword(newPlainPassword: SignInPass#ValueType): UserCredentials
 
