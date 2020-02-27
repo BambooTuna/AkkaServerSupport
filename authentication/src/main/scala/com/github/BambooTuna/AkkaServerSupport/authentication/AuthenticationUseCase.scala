@@ -3,7 +3,11 @@ package com.github.BambooTuna.AkkaServerSupport.authentication
 import cats.{Functor, Monad}
 import cats.data.{Kleisli, OptionT}
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
-import com.github.BambooTuna.AkkaServerSupport.authentication.json.{PasswordInitializationRequestJson, SignInRequestJson, SignUpRequestJson}
+import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
+  PasswordInitializationRequestJson,
+  SignInRequestJson,
+  SignUpRequestJson
+}
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredentials
 import monix.eval.Task
 
