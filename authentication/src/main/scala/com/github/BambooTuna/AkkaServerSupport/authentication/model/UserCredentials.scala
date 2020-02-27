@@ -16,6 +16,6 @@ trait UserCredentials {
 
   def changePassword(newPlainPassword: SignInPass#ValueType): UserCredentials
 
-  def initPassword(): (UserCredentials, SignInPass)
+  def initPassword(): (UserCredentials, SignInPass#ValueType)
 
 }

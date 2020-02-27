@@ -19,19 +19,22 @@ trait AuthenticationUseCase {
   type Id
   type U <: UserCredentials
 
+  type SignUpRequest <: SignUpRequestJson[U]
+  type SignInRequest <: SignInRequestJson[U]
+  type PasswordInitializationRequest <: PasswordInitializationRequestJson[U]
+
   protected val userCredentialsDao: UserCredentialsDao[M, Id, U#SignInId, U]
 
-  def signUp(json: SignUpRequestJson[U]): M[U] =
+  def signUp(json: SignUpRequest): M[U] =
     userCredentialsDao.insert(json.createUserCredentials)
 
-  def signIn(json: SignInRequestJson[U])(
-      implicit F: Functor[M]): OptionT[M, U] =
+  def signIn(json: SignInRequest)(implicit F: Monad[M]): OptionT[M, U] =
     userCredentialsDao
       .resolveBySignInId(json.signInId)
       .filter(_.doAuthenticationByPassword(json.signInPass))
 
-  def passwordInitialization(json: PasswordInitializationRequestJson[U])(
-      implicit F: Monad[M]): OptionT[M, U#SignInPass] =
+  def passwordInitialization(json: PasswordInitializationRequest)(
+      implicit F: Monad[M]): OptionT[M, U#SignInPass#ValueType] =
     for {
       u <- userCredentialsDao
         .resolveBySignInId(json.signInId)

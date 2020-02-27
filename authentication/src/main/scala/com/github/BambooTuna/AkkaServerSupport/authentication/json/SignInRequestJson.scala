@@ -4,5 +4,5 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredenti
 
 trait SignInRequestJson[U <: UserCredentials] {
   val signInId: U#SignInId
-  val signInPass: U#SignInPass
+  val signInPass: U#SignInPass#ValueType
 }
