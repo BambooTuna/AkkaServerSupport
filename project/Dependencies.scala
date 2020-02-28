@@ -82,7 +82,8 @@ object `doobie-quill` {
       ("-hikari" :: "-quill" :: Nil).map(a => "org.tpolecat" %% s"doobie$a" % "0.8.6")
 }
 
-object Kamon {
-  private val version = "1.0.0"
-  val datadog = "io.kamon" %% "kamon-datadog" % version
+object JWT {
+  private val version = "4.2.0"
+  val core = "com.pauldijou" %% "jwt-core" % version
+  val circe = "com.pauldijou" %% "jwt-circe" % version
 }

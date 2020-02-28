@@ -8,45 +8,49 @@ import akka.http.scaladsl.server._
 import com.github.BambooTuna.AkkaServerSupport.core.router._
 import com.github.BambooTuna.AkkaServerSupport.core.session.model.{
   SessionSerializer,
+  SessionStorageStrategy,
   StringSessionSerializer
 }
 import com.github.BambooTuna.AkkaServerSupport.core.session.{
+  DefaultSession,
   DefaultSessionSettings,
-  DefaultSessionStorageStrategy,
-  SessionStorageStrategy
+  DefaultSessionStorageStrategy
 }
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 
-import scala.util.Try
+import scala.concurrent.ExecutionContext
 
-object Routes {
+class Routes(implicit executor: ExecutionContext) {
   type QueryP[T] = Directive[T] => Route
 
   case class Token(value: String)
 
   implicit def serializer: SessionSerializer[Token, String] =
-    StringSessionSerializer(_.value, (in: String) => Try { Token(in) })
-  implicit val strategy: SessionStorageStrategy[String, Token] =
-    DefaultSessionStorageStrategy()(serializer)
-  val settings: DefaultSessionSettings[Token] =
-    DefaultSessionSettings[Token]("pass", "Set-Auth")
+    new StringSessionSerializer(_.asJson.noSpaces,
+                                (in: String) => parser.decode[Token](in).toTry)
+  implicit val strategy: SessionStorageStrategy[String, String] =
+    new DefaultSessionStorageStrategy()
+
+  val settings: DefaultSessionSettings = new DefaultSessionSettings(
+    "internalToken")
+  val session: DefaultSession[Token] = new DefaultSession[Token](settings)
 
   def set: QueryP[Tuple1[String]] = _ { path =>
-    settings.setSession(Token(path)) {
+    session.setSession(Token(path)) {
       complete(StatusCodes.OK, s"path: $path")
     }
   }
 
   def login: QueryP[Unit] = _ {
-    settings.requiredSession { s =>
+    session.requiredSession { s =>
       complete(StatusCodes.OK, s"header: $s")
     }
   }
 
   def logOut: QueryP[Unit] = _ {
-    settings.invalidateSession() {
+    session.invalidateSession() {
       complete(StatusCodes.OK)
     }
   }

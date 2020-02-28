@@ -1,54 +1,22 @@
 package com.github.BambooTuna.AkkaServerSupport.core.session
-import akka.http.scaladsl.server.{
-  AuthorizationFailedRejection,
-  Directive0,
-  Directive1,
-  MissingHeaderRejection
-}
-import akka.http.scaladsl.server.Directives.{
-  optionalHeaderValueByName,
-  provide,
-  pass
-}
-import akka.http.scaladsl.server.directives.RouteDirectives.reject
-import com.github.BambooTuna.AkkaServerSupport.core.session.model.SessionSerializer
 
-import scala.util.{Failure, Success, Try}
+import java.time.Clock
 
-case class DefaultSessionSettings[V](token: String, authHeaderName: String)(
-    implicit strategy: SessionStorageStrategy[String, V],
-    ss: SessionSerializer[V, String])
-    extends SessionSettings[String, V] {
+import com.github.BambooTuna.AkkaServerSupport.core.session.model.SessionSettings
+import pdi.jwt.JwtAlgorithm
+import pdi.jwt.algorithms.JwtHmacAlgorithm
 
-  override def decodeHeaderValue(value: String): Try[V] = Try {
-    strategy.find(findKey(value)).get
-  }
+import scala.concurrent.duration._
 
-  override def findKey(value: String): String = value
+class DefaultSessionSettings(override val token: String)
+    extends SessionSettings {
+  override val setAuthHeaderName: String = "Set-Authorization"
+  override val authHeaderName: String = "Authorization"
 
-  override def setSession(token: V): Directive0 = {
-    val key = ss.serialize(token)
-    strategy.store(key, token)
-    pass
-  }
+  val clock: Clock = Clock.systemUTC
+  val algorithm: JwtHmacAlgorithm = JwtAlgorithm.HS256
+  val expirationDate: FiniteDuration = 30.minutes
 
-  override def requiredSession: Directive1[V] =
-    optionalHeaderValueByName(authHeaderName)
-      .flatMap {
-        case Some(value) =>
-          this.decodeHeaderValue(value) match {
-            case Success(value) => provide(value)
-            case Failure(_)     => reject(AuthorizationFailedRejection)
-          }
-        case None => reject(MissingHeaderRejection(authHeaderName))
-      }
-
-  override def invalidateSession(): Directive0 =
-    requiredSession.flatMap(invalidateSession)
-
-  override def invalidateSession(token: V): Directive0 = {
-    val key = ss.serialize(token)
-    strategy.remove(key)
-    pass
-  }
+  override def createTokenId: String =
+    java.util.UUID.randomUUID.toString.replaceAll("-", "")
 }

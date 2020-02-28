@@ -21,7 +21,7 @@ object Main extends App {
     )
 
   val bindingFuture =
-    Http().bindAndHandle(Routes.createRoute.create,
+    Http().bindAndHandle(new Routes().createRoute.create,
                          serverConfig.host,
                          serverConfig.port)
 
