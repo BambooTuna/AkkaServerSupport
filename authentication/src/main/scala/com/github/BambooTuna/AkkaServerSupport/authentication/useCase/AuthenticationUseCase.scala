@@ -14,8 +14,7 @@ trait AuthenticationUseCase {
   val userCredentialsDao: UserCredentialsDao
 
   type M[O] = userCredentialsDao.M[O]
-  type Id = userCredentialsDao.Id
-  type SignInId = userCredentialsDao.SignInId
+  type SigninId = userCredentialsDao.Id
   type Record = userCredentialsDao.Record
 
   type SignUpRequest <: SignUpRequestJson[Record]
@@ -23,24 +22,23 @@ trait AuthenticationUseCase {
   type PasswordInitializationRequest <: PasswordInitializationRequestJson[
     Record]
 
-  def signUp(json: SignUpRequest): M[Record] =
+  def signUp(json: SignUpRequest): OptionT[M, Record] =
     userCredentialsDao.insert(json.createUserCredentials)
 
   def signIn(json: SignInRequest)(implicit F: Monad[M]): OptionT[M, Record] =
     userCredentialsDao
-      .resolveBySignInId(json.signInId.asInstanceOf[SignInId])
+      .resolveById(json.signInId.asInstanceOf[SigninId])
       .filter(_.doAuthenticationByPassword(json.signInPass))
 
   def passwordInitialization(json: PasswordInitializationRequest)(
-      implicit F: Monad[M]): OptionT[M, Record#SignInPass#ValueType] =
+      implicit F: Monad[M]): OptionT[M, Record#SigninPass#ValueType] =
     for {
       u <- userCredentialsDao
-        .resolveBySignInId(json.signInId.asInstanceOf[SignInId])
+        .resolveById(json.signInId.asInstanceOf[SigninId])
         .filter(_.initializeAuthentication(json))
       (newCredentials, newPlainPassword) = u.initPassword()
-      _ <- OptionT.liftF[M, Record] {
-        userCredentialsDao.update(newCredentials.asInstanceOf[Record])
-      }
+      _ <- userCredentialsDao
+        .update(newCredentials.asInstanceOf[Record])
     } yield newPlainPassword
 
 }

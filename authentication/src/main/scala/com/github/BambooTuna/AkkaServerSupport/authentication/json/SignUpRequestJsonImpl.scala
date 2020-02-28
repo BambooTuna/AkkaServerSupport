@@ -10,7 +10,7 @@ case class SignUpRequestJsonImpl(mail: String, pass: String)
     extends SignUpRequestJson[UserCredentialsImpl] {
   override def createUserCredentials: UserCredentialsImpl =
     UserCredentialsImpl(id = SystemSettings.generateId(),
-                        signInId = mail,
-                        signInPass =
+                        signinId = mail,
+                        signinPass =
                           EncryptedPasswordImpl(pass).changeEncryptedPass(pass))
 }

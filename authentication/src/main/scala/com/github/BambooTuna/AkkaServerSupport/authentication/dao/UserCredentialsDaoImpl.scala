@@ -14,9 +14,9 @@ class UserCredentialsDaoImpl extends UserCredentialsDao {
   override type DBSession = Resource[IO, HikariTransactor[IO]]
 
   override type M[O] = Kleisli[IO, DBSession, O]
-  override type Id = String
-  override type SignInId = String
   override type Record = UserCredentialsImpl
+
+  override type Id = Record#SigninId
 
   val dc: DoobieContext.MySQL[SnakeCase] = new DoobieContext.MySQL(SnakeCase)
   import dc._
@@ -26,23 +26,64 @@ class UserCredentialsDaoImpl extends UserCredentialsDao {
     schemaMeta[Record](
       "user_credentials",
       _.id -> "id",
-      _.signInId -> "mail",
-      _.signInPass.encryptedPass -> "pass"
+      _.signinId -> "mail",
+      _.signinPass.encryptedPass -> "pass"
     )
 
-  override def insert(record: Record): M[Record] =
-    Kleisli { implicit ctx: DBSession =>
-      val q = quote {
-        query[Record]
-          .insert(lift(record))
+  override def insert(record: Record): OptionT[M, Record] =
+    OptionT[M, Record] {
+      Kleisli { implicit ctx: DBSession =>
+        val q = quote {
+          query[Record]
+            .insert(lift(record))
+        }
+        ctx
+          .use(x => run(q).transact(x))
+          .map(a => if (a > 0) Some(record) else None)
       }
-      ctx.use(x => run(q).transact(x)).map(_ => record)
     }
 
-  //TOOD
-  override def resolveById(id: String): OptionT[M, Record] = ???
-  override def resolveBySignInId(id: SignInId): OptionT[M, Record] = ???
-  override def update(record: Record): M[Record] = ???
-  override def delete(id: String): M[String] = ???
+  override def resolveById(signinId: String): OptionT[M, Record] =
+    OptionT[M, Record] {
+      Kleisli { implicit ctx: DBSession =>
+        val q = quote {
+          query[Record]
+            .filter(_.signinId == lift(signinId))
+        }
+        ctx
+          .use(x => run(q).transact(x))
+          .map(_.headOption)
+      }
+    }
+
+  override def update(record: Record): OptionT[M, Record] =
+    OptionT[M, Record] {
+      Kleisli { implicit ctx: DBSession =>
+        val q = quote {
+          query[Record]
+            .filter(_.signinId == lift(record.signinId))
+            .update(a =>
+              (a.signinId -> record.signinId,
+               a.signinPass -> record.signinPass))
+        }
+        ctx
+          .use(x => run(q).transact(x))
+          .map(a => if (a > 0) Some(record) else None)
+      }
+    }
+
+  override def delete(signinId: String): OptionT[M, Id] =
+    OptionT[M, Id] {
+      Kleisli { implicit ctx: DBSession =>
+        val q = quote {
+          query[Record]
+            .filter(_.id == lift(signinId))
+            .delete
+        }
+        ctx
+          .use(x => run(q).transact(x))
+          .map(a => if (a > 0) Some(signinId) else None)
+      }
+    }
 
 }

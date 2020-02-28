@@ -3,7 +3,10 @@ package com.github.BambooTuna.AkkaServerSupport.authentication.router
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.{Directive, Route}
 import akka.http.scaladsl.server.Directives._
-import com.github.BambooTuna.AkkaServerSupport.authentication.json.{SignInRequestJsonImpl, SignUpRequestJsonImpl}
+import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
+  SignInRequestJsonImpl,
+  SignUpRequestJsonImpl
+}
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCaseImpl
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 
@@ -21,7 +24,6 @@ trait AuthenticationRouteImpl extends FailFastCirceSupport {
 
   type M[O] = useCase.userCredentialsDao.M[O]
   type Id = useCase.userCredentialsDao.Id
-  type SignInId = useCase.userCredentialsDao.SignInId
   type Record = useCase.userCredentialsDao.Record
 
   type SignUpRequest = useCase.SignUpRequest
@@ -32,13 +34,14 @@ trait AuthenticationRouteImpl extends FailFastCirceSupport {
 
   def signUpRoute(dbSession: DBSession): QueryP[Unit] = _ {
     entity(as[SignUpRequestJsonImpl]) { json: SignUpRequestJsonImpl =>
-      val f: IO[Record] =
+      val f: IO[Option[Record]] =
         useCase
           .signUp(json)
+          .value
           .run(dbSession)
-      onComplete(convertIO[Record](f)) {
+      onComplete(convertIO[Option[Record]](f)) {
         case Success(value) => complete(StatusCodes.OK, s"${value.toString}")
-        case Failure(_)       => complete(StatusCodes.BadRequest)
+        case Failure(_)     => complete(StatusCodes.BadRequest)
       }
     }
   }
@@ -51,9 +54,10 @@ trait AuthenticationRouteImpl extends FailFastCirceSupport {
           .value
           .run(dbSession)
       onComplete(convertIO[Option[Record]](f)) {
-        case Success(Some(value)) => complete(StatusCodes.OK, s"${value.toString}")
-        case Success(None)    => complete(StatusCodes.Forbidden)
-        case Failure(_)       => complete(StatusCodes.BadRequest)
+        case Success(Some(value)) =>
+          complete(StatusCodes.OK, s"${value.toString}")
+        case Success(None) => complete(StatusCodes.Forbidden)
+        case Failure(_)    => complete(StatusCodes.BadRequest)
       }
     }
   }

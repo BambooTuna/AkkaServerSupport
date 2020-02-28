@@ -4,20 +4,20 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.json.PasswordIniti
 
 trait UserCredentials {
   type Id
-  type SignInId
-  type SignInPass <: EncryptedPassword
+  type SigninId
+  type SigninPass <: EncryptedPassword
 
   val id: Id
-  val signInId: SignInId
-  val signInPass: SignInPass
+  val signinId: SigninId
+  val signinPass: SigninPass
 
   def doAuthenticationByPassword(inputPass: Any): Boolean
 
   def initializeAuthentication(
       json: PasswordInitializationRequestJson[_]): Boolean
 
-  def changePassword(newPlainPassword: SignInPass#ValueType): UserCredentials
+  def changePassword(newPlainPassword: SigninPass#ValueType): UserCredentials
 
-  def initPassword(): (UserCredentials, SignInPass#ValueType)
+  def initPassword(): (UserCredentials, SigninPass#ValueType)
 
 }

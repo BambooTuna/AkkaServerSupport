@@ -4,22 +4,22 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.SystemSettings
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.PasswordInitializationRequestJson
 
 case class UserCredentialsImpl(id: String,
-                               signInId: String,
-                               signInPass: EncryptedPasswordImpl)
+                               signinId: String,
+                               signinPass: EncryptedPasswordImpl)
     extends UserCredentials {
   override type Id = String
-  override type SignInId = String
-  override type SignInPass = EncryptedPasswordImpl
+  override type SigninId = String
+  override type SigninPass = EncryptedPasswordImpl
 
   override def doAuthenticationByPassword(inputPass: Any): Boolean =
-    signInPass == inputPass
+    signinPass == inputPass
 
   //TODO
   override def initializeAuthentication(
       json: PasswordInitializationRequestJson[_]): Boolean = false
 
   override def changePassword(newPlainPassword: String): UserCredentialsImpl =
-    copy(signInPass = signInPass.changeEncryptedPass(newPlainPassword))
+    copy(signinPass = signinPass.changeEncryptedPass(newPlainPassword))
 
   override def initPassword(): (UserCredentialsImpl, String) = {
     val newPlainPassword = SystemSettings.generateId()

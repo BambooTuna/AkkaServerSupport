@@ -8,18 +8,16 @@ trait UserCredentialsDao {
   type DBSession
 
   type M[O] = Kleisli[IO, DBSession, O]
-  type Id
-  type SignInId
   type Record <: UserCredentials
 
-  def insert(record: Record): M[Record]
+  type Id
+
+  def insert(record: Record): OptionT[M, Record]
 
   def resolveById(id: Id): OptionT[M, Record]
 
-  def resolveBySignInId(id: SignInId): OptionT[M, Record]
+  def update(record: Record): OptionT[M, Record]
 
-  def update(record: Record): M[Record]
-
-  def delete(id: Id): M[Id]
+  def delete(id: Id): OptionT[M, Id]
 
 }

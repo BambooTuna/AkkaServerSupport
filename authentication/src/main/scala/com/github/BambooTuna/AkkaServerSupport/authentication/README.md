@@ -7,9 +7,8 @@
 $ MYSQL_HOST=localhost sbt authentication/run
 
 $ curl -X POST -H "Content-Type: application/json" -d '{"mail":"bambootuna@gmail.com","pass":"pass"}' localhost:18080/signup
-$ curl -X POST -H "Content-Type: application/json" -d '{"signInId":"bambootuna@gmail.com","signInPass":"pass"}' localhost:18080/signin
+$ curl -X POST -H "Content-Type: application/json" -d '{"mail":"bambootuna@gmail.com","pass":"pass"}' localhost:18080/signin
 ```
-※field nameを変更する
 
 ## データーベース構成
 ...
