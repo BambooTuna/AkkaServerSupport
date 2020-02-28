@@ -18,7 +18,8 @@ object Routes {
       }
     Router(
       route(POST, "signup", myRouter.signUpRoute(dbSession)),
-      route(POST, "signin", myRouter.signInRoute(dbSession))
+      route(POST, "signin", myRouter.signInRoute(dbSession)),
+      route(POST, "init", myRouter.passwordInitializationRoute(dbSession))
     )
   }
 
