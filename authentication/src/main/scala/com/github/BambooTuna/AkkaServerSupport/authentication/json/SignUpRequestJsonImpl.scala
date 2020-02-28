@@ -1,5 +1,6 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.json
 
+import com.github.BambooTuna.AkkaServerSupport.authentication.SystemSettings
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.{
   EncryptedPasswordImpl,
   UserCredentialsImpl
@@ -8,7 +9,8 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.model.{
 case class SignUpRequestJsonImpl(mail: String, pass: String)
     extends SignUpRequestJson[UserCredentialsImpl] {
   override def createUserCredentials: UserCredentialsImpl =
-    UserCredentialsImpl(signInId = mail,
+    UserCredentialsImpl(id = SystemSettings.generateId(),
+                        signInId = mail,
                         signInPass =
                           EncryptedPasswordImpl(pass).changeEncryptedPass(pass))
 }

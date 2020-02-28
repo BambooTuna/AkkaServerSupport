@@ -1,14 +1,19 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.model
 
+import java.math.BigInteger
+import java.security.MessageDigest
+
 case class EncryptedPasswordImpl(encryptedPass: String)
     extends EncryptedPassword
     with io.getquill.Embedded {
 
-  //TODO
-  override protected def encryption(plainPass: ValueType): ValueType = plainPass
+  private val SHA256 = MessageDigest.getInstance("SHA-256")
 
-  override def changeEncryptedPass(
-      plainPass: ValueType): EncryptedPasswordImpl =
+  override protected def encryption(plainPass: String): String =
+    String.format("%064x",
+                  new BigInteger(1, SHA256.digest(plainPass.getBytes("UTF-8"))))
+
+  override def changeEncryptedPass(plainPass: String): EncryptedPasswordImpl =
     copy(encryptedPass = encryption(plainPass))
 
 }

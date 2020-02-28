@@ -3,9 +3,11 @@ package com.github.BambooTuna.AkkaServerSupport.authentication.model
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.PasswordInitializationRequestJson
 
 trait UserCredentials {
+  type Id
   type SignInId
   type SignInPass <: EncryptedPassword
 
+  val id: Id
   val signInId: SignInId
   val signInPass: SignInPass
 

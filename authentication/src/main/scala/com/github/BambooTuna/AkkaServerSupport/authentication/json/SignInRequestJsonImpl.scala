@@ -1,6 +1,12 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.json
 
-import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredentialsImpl
+import com.github.BambooTuna.AkkaServerSupport.authentication.model.{
+  EncryptedPasswordImpl,
+  UserCredentialsImpl
+}
 
-case class SignInRequestJsonImpl(signInId: String, signInPass: String)
-    extends SignInRequestJson[UserCredentialsImpl]
+case class SignInRequestJsonImpl(mail: String, pass: String)
+    extends SignInRequestJson[UserCredentialsImpl] {
+  override val signInId: String = mail
+  override val signInPass: EncryptedPasswordImpl#ValueType = pass
+}

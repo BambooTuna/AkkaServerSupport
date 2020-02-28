@@ -25,7 +25,8 @@ class UserCredentialsDaoImpl extends UserCredentialsDao {
   implicit lazy val daoSchemaMeta =
     schemaMeta[Record](
       "user_credentials",
-      _.signInId -> "id",
+      _.id -> "id",
+      _.signInId -> "mail",
       _.signInPass.encryptedPass -> "pass"
     )
 
