@@ -1,4 +1,4 @@
-package com.github.BambooTuna.AkkaServerSupport.core
+package com.github.BambooTuna.AkkaServerSupport.core.router
 
 import akka.http.scaladsl.model.HttpMethod
 import akka.http.scaladsl.server.Directives._
