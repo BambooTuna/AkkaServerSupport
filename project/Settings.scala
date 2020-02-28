@@ -17,7 +17,6 @@ object Settings {
       Logback.classic,
       LogstashLogbackEncoder.encoder,
       Config.core,
-      Kamon.datadog,
       Monix.version,
       MySQLConnectorJava.version,
       Redis.client
