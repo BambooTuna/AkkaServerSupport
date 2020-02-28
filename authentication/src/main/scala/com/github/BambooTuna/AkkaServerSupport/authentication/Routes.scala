@@ -3,7 +3,7 @@ package com.github.BambooTuna.AkkaServerSupport.authentication
 import akka.http.scaladsl.model.HttpMethods.POST
 import com.github.BambooTuna.AkkaServerSupport.authentication.Main.dbSession
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.AuthenticationRouteImpl
-import com.github.BambooTuna.AkkaServerSupport.core.{Router, route}
+import com.github.BambooTuna.AkkaServerSupport.core.router.{Router, route}
 
 import scala.concurrent.Future
 import monix.execution.Scheduler.Implicits.global
