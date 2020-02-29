@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
 
-case class DefaultSessionStorageStrategy()
+class DefaultSessionStorageStrategy()
     extends SessionStorageStrategy[String, String] {
 
   val logger = LoggerFactory.getLogger(getClass)

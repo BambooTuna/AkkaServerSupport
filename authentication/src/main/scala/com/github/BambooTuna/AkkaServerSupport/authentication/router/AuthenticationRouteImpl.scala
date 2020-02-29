@@ -8,15 +8,39 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   SignInRequestJsonImpl,
   SignUpRequestJsonImpl
 }
+import com.github.BambooTuna.AkkaServerSupport.authentication.router.AuthenticationRouteImpl.SessionToken
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCaseImpl
+import com.github.BambooTuna.AkkaServerSupport.core.session.{
+  DefaultSession,
+  DefaultSessionSettings,
+  DefaultSessionStorageStrategy
+}
+import com.github.BambooTuna.AkkaServerSupport.core.session.model.{
+  SessionSerializer,
+  SessionStorageStrategy,
+  StringSessionSerializer
+}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import io.circe._
 import io.circe.generic.auto._
+import io.circe.syntax._
 
 trait AuthenticationRouteImpl extends FailFastCirceSupport {
   type QueryP[Q] = Directive[Q] => Route
+
+  implicit val executor: ExecutionContext
+  implicit val settings: DefaultSessionSettings
+  implicit val strategy: SessionStorageStrategy[String, String]
+
+  implicit def serializer: SessionSerializer[SessionToken, String] =
+    new StringSessionSerializer(
+      _.asJson.noSpaces,
+      (in: String) => parser.decode[SessionToken](in).toTry)
+  protected val session: DefaultSession[SessionToken] =
+    new DefaultSession[SessionToken](settings)
 
   val useCase: AuthenticationUseCaseImpl = new AuthenticationUseCaseImpl
 
@@ -41,8 +65,12 @@ trait AuthenticationRouteImpl extends FailFastCirceSupport {
           .value
           .run(dbSession)
       onComplete(convertIO[Option[Record]](f)) {
-        case Success(value) => complete(StatusCodes.OK, s"${value.toString}")
-        case Failure(_)     => complete(StatusCodes.BadRequest)
+        case Success(Some(value)) =>
+          session.setSession(SessionToken(value.id)) {
+            complete(StatusCodes.OK)
+          }
+        case Success(None) => complete(StatusCodes.Forbidden)
+        case Failure(_)    => complete(StatusCodes.BadRequest)
       }
     }
   }
@@ -56,7 +84,9 @@ trait AuthenticationRouteImpl extends FailFastCirceSupport {
           .run(dbSession)
       onComplete(convertIO[Option[Record]](f)) {
         case Success(Some(value)) =>
-          complete(StatusCodes.OK, s"${value.toString}")
+          session.setSession(SessionToken(value.id)) {
+            complete(StatusCodes.OK)
+          }
         case Success(None) => complete(StatusCodes.Forbidden)
         case Failure(_)    => complete(StatusCodes.BadRequest)
       }
@@ -75,11 +105,23 @@ trait AuthenticationRouteImpl extends FailFastCirceSupport {
           case Success(Some(value)) =>
             complete(
               StatusCodes.OK,
-              s"""{"new_pass":"$value","message":"After signin, please change your password!"}""")
+              s"""{"send_new_pass_to":"${json.mail}","message":"After signin, please change your password!"}""")
           case Success(None) => complete(StatusCodes.Forbidden)
           case Failure(_)    => complete(StatusCodes.BadRequest)
         }
     }
   }
 
+  def healthCheck: QueryP[Unit] = _ {
+    session.requiredSession { sessionToken =>
+      complete(
+        StatusCodes.OK,
+        s"""Internal DEBUG: sessionToken.userId is ${sessionToken.userId}""")
+    }
+  }
+
+}
+
+object AuthenticationRouteImpl {
+  case class SessionToken(userId: String)
 }
