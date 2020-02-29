@@ -25,7 +25,6 @@ class RedisSessionStorageStrategy(dbSession: RedisClient)(
   override def remove(key: String): Future[Unit] =
     dbSession
       .del(key)
-      .filter(_ > 0)
       .map(_ => ())
 
 }

@@ -96,9 +96,9 @@ abstract class DefaultSession[V](val settings: DefaultSessionSettings)(
         key <- OptionT[Future, JwtClaim](
           Future.successful(jwtDecode(value).toOption))
         jwtId <- OptionT[Future, String](Future.successful(key.jwtId))
-        v <- OptionT[Future, String](strategy.find(jwtId)).filter(
+        _ <- OptionT[Future, String](strategy.find(jwtId)).filter(
           _ == key.content)
-        r <- OptionT[Future, Unit](strategy.remove(v).map(_ => Some()))
+        r <- OptionT[Future, Unit](strategy.remove(jwtId).map(_ => Some()))
       } yield r)
         .toRight(InvalidToken)
         .value
