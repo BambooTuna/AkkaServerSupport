@@ -18,3 +18,8 @@ trait Session[K, V] extends ErrorHandleSupport {
     respondWithHeaders(RawHeader(settings.authHeaderName, token))
 
 }
+
+object Session {
+  sealed trait SessionError
+  case object InvalidToken extends SessionError
+}

@@ -10,14 +10,11 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
   DefaultSessionSettings,
   RedisSessionStorageStrategy
 }
+import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase
+import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase.AuthenticationUseCaseError
 import com.github.BambooTuna.AkkaServerSupport.core.error.CustomErrorResponse
 import com.github.BambooTuna.AkkaServerSupport.core.router.{Router, route}
 import com.github.BambooTuna.AkkaServerSupport.core.session.SessionStorageStrategy
-import com.github.BambooTuna.AkkaServerSupport.core.session.SessionStorageStrategy.{
-  StrategyFindError,
-  StrategyRemoveError,
-  StrategyStoreError
-}
 import doobie.hikari.HikariTransactor
 import io.circe.Error
 import monix.eval.Task
@@ -41,23 +38,22 @@ class Routes(val sessionSettings: DefaultSessionSettings,
         new RedisSessionStorageStrategy(redisSession)
 
       override def errorHandling(throwable: Throwable): StandardRoute = {
-        println(throwable)
         throwable match {
-          case e: StrategyStoreError =>
-            complete(StatusCodes.InternalServerError, "StrategyStoreError")
-          case e: StrategyFindError =>
-            complete(StatusCodes.InternalServerError, "StrategyFindError")
-          case e: StrategyRemoveError =>
-            complete(StatusCodes.InternalServerError, "StrategyRemoveError")
           case e: RuntimeException =>
-            complete(StatusCodes.InternalServerError,
-                     "Unknown RuntimeException")
+            complete(StatusCodes.InternalServerError, e.getMessage)
           case e: Exception =>
-            complete(StatusCodes.BadRequest, "Unknown Exception")
-          case e: CustomErrorResponse =>
-            complete(e.statusCode, e.toResponseJson)
-          case e: Error => complete(StatusCodes.BadRequest, "Unknown Error")
+            complete(StatusCodes.BadRequest, e.getMessage)
         }
+      }
+
+      override def customErrorHandler(
+          error: AuthenticationUseCaseError): StandardRoute = error match {
+        case AuthenticationUseCase.SignUpInsertError =>
+          complete(StatusCodes.Conflict, "メールアドレスが使用されています")
+        case AuthenticationUseCase.CantFoundUserError =>
+          complete(StatusCodes.NotFound, "ユーザーが存在しません")
+        case AuthenticationUseCase.SignInIdOrPassWrongError =>
+          complete(StatusCodes.Forbidden, "認証失敗")
       }
     }
 

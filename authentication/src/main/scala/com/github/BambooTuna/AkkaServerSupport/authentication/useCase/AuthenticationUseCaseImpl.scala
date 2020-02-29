@@ -19,4 +19,7 @@ class AuthenticationUseCaseImpl extends AuthenticationUseCase {
   override val userCredentialsDao: UserCredentialsDaoImpl =
     new UserCredentialsDaoImpl
 
+  override def ioErrorHandling[T, U >: T](io: IO[T], f: Throwable => U): IO[U] =
+    io.onErrorHandle(f)
+
 }

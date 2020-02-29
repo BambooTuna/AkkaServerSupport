@@ -12,7 +12,7 @@ trait UserCredentialsDao {
 
   type Id
 
-  def insert(record: Record): OptionT[M, Record]
+  def insert(record: Record): M[Record]
 
   def resolveById(id: Id): OptionT[M, Record]
 

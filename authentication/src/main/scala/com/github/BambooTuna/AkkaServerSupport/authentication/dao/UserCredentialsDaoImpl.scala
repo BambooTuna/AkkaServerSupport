@@ -13,7 +13,6 @@ class UserCredentialsDaoImpl extends UserCredentialsDao {
   override type IO[O] = Task[O]
   override type DBSession = Resource[IO, HikariTransactor[IO]]
 
-  override type M[O] = Kleisli[IO, DBSession, O]
   override type Record = UserCredentialsImpl
 
   override type Id = Record#SigninId
@@ -30,17 +29,15 @@ class UserCredentialsDaoImpl extends UserCredentialsDao {
       _.signinPass.encryptedPass -> "pass"
     )
 
-  override def insert(record: Record): OptionT[M, Record] =
-    OptionT[M, Record] {
-      Kleisli { implicit ctx: DBSession =>
-        val q = quote {
-          query[Record]
-            .insert(lift(record))
-        }
-        ctx
-          .use(x => run(q).transact(x))
-          .map(a => if (a > 0) Some(record) else None)
+  override def insert(record: Record): M[Record] =
+    Kleisli { implicit ctx: DBSession =>
+      val q = quote {
+        query[Record]
+          .insert(lift(record))
       }
+      ctx
+        .use(x => run(q).transact(x))
+        .map(a => if (a > 0) record else throw new RuntimeException)
     }
 
   override def resolveById(signinId: String): OptionT[M, Record] =

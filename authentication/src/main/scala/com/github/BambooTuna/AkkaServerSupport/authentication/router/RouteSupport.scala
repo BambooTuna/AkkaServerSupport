@@ -6,6 +6,8 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
   DefaultSession,
   DefaultSessionSettings
 }
+import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase
+import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase.AuthenticationUseCaseError
 import com.github.BambooTuna.AkkaServerSupport.core.session.{
   SessionSerializer,
   SessionStorageStrategy,
@@ -34,6 +36,8 @@ trait RouteSupport extends FailFastCirceSupport {
       override def fromThrowable(throwable: Throwable): StandardRoute =
         errorHandling(throwable)
     }
+
+  def customErrorHandler(error: AuthenticationUseCaseError): StandardRoute
 
 }
 

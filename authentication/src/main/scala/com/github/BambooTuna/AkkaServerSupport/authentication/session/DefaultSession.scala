@@ -8,8 +8,10 @@ import akka.http.scaladsl.server.{
   Directive1,
   MissingHeaderRejection
 }
-import com.github.BambooTuna.AkkaServerSupport.authentication.session.error.JWTDecodeError
+import cats._, data._, implicits._
+import cats.data.OptionT
 import com.github.BambooTuna.AkkaServerSupport.core.error.ErrorHandleSupport
+import com.github.BambooTuna.AkkaServerSupport.core.session.Session.InvalidToken
 import com.github.BambooTuna.AkkaServerSupport.core.session.{
   Session,
   SessionSerializer,
@@ -44,14 +46,13 @@ abstract class DefaultSession[V](val settings: DefaultSessionSettings)(
   def jwtDecode(value: String): Try[JwtClaim] =
     Jwt
       .decode(value, settings.token, Seq(settings.algorithm))
-      .recover { case e: Throwable => throw JWTDecodeError(e.getMessage) }
 
   override def setSession(token: V): Directive0 = {
     val id: String = settings.createTokenId
     val tokenValue = jwtEncode(id, ss.serialize(token))
     val f =
       strategy
-        .runStore(id, ss.serialize(token))
+        .store(id, ss.serialize(token))
     onComplete(f).flatMap {
       case Success(_) => addAuthHeader(tokenValue)
       case Failure(e) => fromThrowable(e)
@@ -63,18 +64,21 @@ abstract class DefaultSession[V](val settings: DefaultSessionSettings)(
       .flatMap {
         case Some(value) =>
           val f =
-            for {
-              key <- Future.fromTry(jwtDecode(value))
-              v <- strategy
-                .runFind(key.jwtId.get)
-              content <- Future.successful(
-                v.filter(_ == key.content)
-                  .flatMap(a => ss.deserialize(a).toOption))
-            } yield content
+            (for {
+              key <- OptionT[Future, JwtClaim](
+                Future.successful(jwtDecode(value).toOption))
+              jwtId <- OptionT[Future, String](Future.successful(key.jwtId))
+              v <- OptionT[Future, String](strategy.find(jwtId)).filter(
+                _ == key.content)
+              content <- OptionT[Future, V](
+                Future.successful(ss.deserialize(v).toOption))
+            } yield content)
+              .toRight(InvalidToken)
+              .value
           onComplete(f).flatMap {
-            case Success(Some(value)) => provide(value)
-            case Success(None)        => reject(AuthorizationFailedRejection)
-            case Failure(e)           => fromThrowable(e)
+            case Success(Right(value)) => provide(value)
+            case Success(Left(value))  => reject(AuthorizationFailedRejection)
+            case Failure(e)            => fromThrowable(e)
           }
         case None => reject(MissingHeaderRejection(settings.setAuthHeaderName))
       }
@@ -88,13 +92,20 @@ abstract class DefaultSession[V](val settings: DefaultSessionSettings)(
 
   override def invalidateSession(value: String): Directive0 = {
     val f =
-      for {
-        key <- Future.fromTry(jwtDecode(value))
-        r <- strategy.runRemove(key.jwtId.get)
-      } yield r
+      (for {
+        key <- OptionT[Future, JwtClaim](
+          Future.successful(jwtDecode(value).toOption))
+        jwtId <- OptionT[Future, String](Future.successful(key.jwtId))
+        v <- OptionT[Future, String](strategy.find(jwtId)).filter(
+          _ == key.content)
+        r <- OptionT[Future, Unit](strategy.remove(v).map(_ => Some()))
+      } yield r)
+        .toRight(InvalidToken)
+        .value
     onComplete(f).flatMap {
-      case Success(_) => pass
-      case Failure(e) => fromThrowable(e)
+      case Success(Right(_)) => pass
+      case Success(Left(_))  => reject(AuthorizationFailedRejection)
+      case Failure(e)        => fromThrowable(e)
     }
   }
 
