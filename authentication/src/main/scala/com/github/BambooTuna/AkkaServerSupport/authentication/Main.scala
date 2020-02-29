@@ -4,8 +4,8 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import cats.effect.{Blocker, Resource}
+import com.github.BambooTuna.AkkaServerSupport.authentication.session.DefaultSessionSettings
 import com.github.BambooTuna.AkkaServerSupport.core.domain.ServerConfig
-import com.github.BambooTuna.AkkaServerSupport.core.session.DefaultSessionSettings
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
 import redis.RedisClient

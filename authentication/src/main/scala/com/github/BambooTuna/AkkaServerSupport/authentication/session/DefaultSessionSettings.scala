@@ -1,8 +1,8 @@
-package com.github.BambooTuna.AkkaServerSupport.core.session
+package com.github.BambooTuna.AkkaServerSupport.authentication.session
 
 import java.time.Clock
 
-import com.github.BambooTuna.AkkaServerSupport.core.session.model.SessionSettings
+import com.github.BambooTuna.AkkaServerSupport.core.session.SessionSettings
 import pdi.jwt.JwtAlgorithm
 import pdi.jwt.algorithms.JwtHmacAlgorithm
 

@@ -9,6 +9,11 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   SignUpRequestJsonImpl
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
+import com.github.BambooTuna.AkkaServerSupport.authentication.router.error.{
+  AuthenticationFailedError,
+  InitializePasswordDataFailedError,
+  RegisterSignUpDataFailedError
+}
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCaseImpl
 
 import scala.concurrent.Future
@@ -45,8 +50,12 @@ trait AuthenticationRouteImpl extends RouteSupport {
           session.setSession(SessionToken(value.id)) {
             complete(StatusCodes.OK)
           }
-        case Success(None) => complete(StatusCodes.Forbidden)
-        case Failure(_)    => complete(StatusCodes.BadRequest)
+        case Success(None) =>
+          errorHandling(
+            RegisterSignUpDataFailedError(s"メールアドレスが使われています: ${json.mail}"))
+        case Failure(e) =>
+          errorHandling(
+            RegisterSignUpDataFailedError(s"メールアドレスが使われています: ${json.mail}"))
       }
     }
   }
@@ -58,13 +67,16 @@ trait AuthenticationRouteImpl extends RouteSupport {
           .signIn(json)
           .value
           .run(dbSession)
+          .onErrorHandle(_ => throw new RuntimeException())
       onComplete(convertIO[Option[Record]](f)) {
         case Success(Some(value)) =>
           session.setSession(SessionToken(value.id)) {
             complete(StatusCodes.OK)
           }
-        case Success(None) => complete(StatusCodes.Forbidden)
-        case Failure(_)    => complete(StatusCodes.BadRequest)
+        case Success(None) =>
+          errorHandling(
+            AuthenticationFailedError(s"accessed mail: ${json.mail}"))
+        case Failure(e) => errorHandling(e)
       }
     }
   }
@@ -77,13 +89,19 @@ trait AuthenticationRouteImpl extends RouteSupport {
             .passwordInitialization(json)
             .value
             .run(dbSession)
+            .onErrorHandle(_ => throw new RuntimeException()) //ここでFutureエラーが起きる＝深刻なエラー
+
+        //TODO fの戻り値は新規パスワード、メールに送信などの処理を追加
         onComplete(convertIO[Option[String]](f)) {
           case Success(Some(value)) =>
             complete(
               StatusCodes.OK,
               s"""{"send_new_pass_to":"${json.mail}","message":"After signin, please change your password!"}""")
-          case Success(None) => complete(StatusCodes.Forbidden)
-          case Failure(_)    => complete(StatusCodes.BadRequest)
+          case Success(None) =>
+            errorHandling(
+              InitializePasswordDataFailedError(
+                s"パスワード初期化: メールアドレスが見つかりません: ${json.mail}"))
+          case Failure(e) => errorHandling(e)
         }
     }
   }

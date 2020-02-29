@@ -1,10 +1,11 @@
-package com.github.BambooTuna.AkkaServerSupport.core.session.model
+package com.github.BambooTuna.AkkaServerSupport.core.session
 
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.server.{Directive0, Directive1}
 import akka.http.scaladsl.server.Directives.respondWithHeaders
+import akka.http.scaladsl.server.{Directive0, Directive1}
+import com.github.BambooTuna.AkkaServerSupport.core.error.ErrorHandleSupport
 
-trait Session[K, V] {
+trait Session[K, V] extends ErrorHandleSupport {
 
   val settings: SessionSettings
 

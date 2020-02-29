@@ -1,15 +1,16 @@
-package com.github.BambooTuna.AkkaServerSupport.core.session
+package com.github.BambooTuna.AkkaServerSupport.authentication.session
 
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.directives.RouteDirectives.reject
 import akka.http.scaladsl.server.{
   AuthorizationFailedRejection,
   Directive0,
   Directive1,
-  MissingHeaderRejection,
-  ValidationRejection
+  MissingHeaderRejection
 }
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.directives.RouteDirectives.reject
-import com.github.BambooTuna.AkkaServerSupport.core.session.model.{
+import com.github.BambooTuna.AkkaServerSupport.authentication.session.error.JWTDecodeError
+import com.github.BambooTuna.AkkaServerSupport.core.error.ErrorHandleSupport
+import com.github.BambooTuna.AkkaServerSupport.core.session.{
   Session,
   SessionSerializer,
   SessionStorageStrategy,
@@ -20,13 +21,14 @@ import pdi.jwt.{Jwt, JwtClaim}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-class DefaultSession[V](val settings: DefaultSessionSettings)(
+abstract class DefaultSession[V](val settings: DefaultSessionSettings)(
     implicit strategy: SessionStorageStrategy[String, String],
     ss: SessionSerializer[V, String],
     executor: ExecutionContext)
-    extends Session[String, V] {
+    extends Session[String, V]
+    with ErrorHandleSupport {
 
-  val sts: SessionSerializer[String, String] =
+  protected val sts: SessionSerializer[String, String] =
     new StringSessionSerializer(identity, (in: String) => Try { in })
 
   def jwtEncode(id: String, value: String): String =
@@ -40,18 +42,19 @@ class DefaultSession[V](val settings: DefaultSessionSettings)(
     )
 
   def jwtDecode(value: String): Try[JwtClaim] =
-    Jwt.decode(value, settings.token, Seq(settings.algorithm))
+    Jwt
+      .decode(value, settings.token, Seq(settings.algorithm))
+      .recover { case e: Throwable => throw JWTDecodeError(e.getMessage) }
 
   override def setSession(token: V): Directive0 = {
-    println(java.util.UUID.randomUUID.toString.replaceAll("-", ""))
-    val id: String = java.util.UUID.randomUUID.toString.replaceAll("-", "")
-    //settings.createTokenId
+    val id: String = settings.createTokenId
     val tokenValue = jwtEncode(id, ss.serialize(token))
     val f =
-      strategy.store(id, ss.serialize(token))
+      strategy
+        .runStore(id, ss.serialize(token))
     onComplete(f).flatMap {
       case Success(_) => addAuthHeader(tokenValue)
-      case Failure(e) => reject(ValidationRejection(e.getMessage))
+      case Failure(e) => fromThrowable(e)
     }
   }
 
@@ -62,17 +65,16 @@ class DefaultSession[V](val settings: DefaultSessionSettings)(
           val f =
             for {
               key <- Future.fromTry(jwtDecode(value))
-              v <- strategy.find(key.jwtId.get)
+              v <- strategy
+                .runFind(key.jwtId.get)
               content <- Future.successful(
-                v.filter(a => {
-                    println(s"$a|${key.content}"); a == key.content
-                  })
+                v.filter(_ == key.content)
                   .flatMap(a => ss.deserialize(a).toOption))
             } yield content
           onComplete(f).flatMap {
             case Success(Some(value)) => provide(value)
             case Success(None)        => reject(AuthorizationFailedRejection)
-            case Failure(e)           => reject(ValidationRejection(e.getMessage))
+            case Failure(e)           => fromThrowable(e)
           }
         case None => reject(MissingHeaderRejection(settings.setAuthHeaderName))
       }
@@ -88,11 +90,11 @@ class DefaultSession[V](val settings: DefaultSessionSettings)(
     val f =
       for {
         key <- Future.fromTry(jwtDecode(value))
-        r <- strategy.remove(key.jwtId.get)
+        r <- strategy.runRemove(key.jwtId.get)
       } yield r
     onComplete(f).flatMap {
       case Success(_) => pass
-      case Failure(e) => reject(AuthorizationFailedRejection)
+      case Failure(e) => fromThrowable(e)
     }
   }
 

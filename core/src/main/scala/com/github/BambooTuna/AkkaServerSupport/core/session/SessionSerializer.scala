@@ -1,4 +1,4 @@
-package com.github.BambooTuna.AkkaServerSupport.core.session.model
+package com.github.BambooTuna.AkkaServerSupport.core.session
 
 import scala.util.Try
 

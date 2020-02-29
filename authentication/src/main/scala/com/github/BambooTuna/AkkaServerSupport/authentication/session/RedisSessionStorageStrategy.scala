@@ -1,13 +1,12 @@
-package com.github.BambooTuna.AkkaServerSupport.authentication.dao
+package com.github.BambooTuna.AkkaServerSupport.authentication.session
 
-import com.github.BambooTuna.AkkaServerSupport.core.session.DefaultSessionSettings
-import com.github.BambooTuna.AkkaServerSupport.core.session.model.SessionStorageStrategy
+import com.github.BambooTuna.AkkaServerSupport.core.session.SessionStorageStrategy
 import redis.RedisClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class RedisSessionStorageStrategy(dbSession: RedisClient)(
-    implicit executor: ExecutionContext,
+    implicit val executor: ExecutionContext,
     settings: DefaultSessionSettings)
     extends SessionStorageStrategy[String, String] {
 
