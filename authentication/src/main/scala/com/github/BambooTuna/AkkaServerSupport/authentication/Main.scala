@@ -64,11 +64,15 @@ object Main extends App {
         .seconds
     }
 
+  println(sessionSettings)
+  println(sessionSettings.createTokenId)
+
+  val r = new Routes(sessionSettings, redisSession, dbSession)
+
   val bindingFuture =
-    Http().bindAndHandle(
-      new Routes(sessionSettings, redisSession).createRoute.create,
-      serverConfig.host,
-      serverConfig.port)
+    Http().bindAndHandle(r.createRoute.create,
+                         serverConfig.host,
+                         serverConfig.port)
 
   sys.addShutdownHook {
     bindingFuture

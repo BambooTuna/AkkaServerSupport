@@ -13,6 +13,7 @@ lazy val core = (project in file("core"))
 lazy val authentication = (project in file("authentication"))
   .enablePlugins(JavaAppPackaging, AshScriptPlugin, DockerPlugin)
   .settings(commonSettings)
+  .settings(dockerSettings)
   .dependsOn(core)
 
 lazy val root =

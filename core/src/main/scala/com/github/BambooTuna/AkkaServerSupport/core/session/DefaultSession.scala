@@ -20,7 +20,7 @@ import pdi.jwt.{Jwt, JwtClaim}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-class DefaultSession[V](override val settings: DefaultSessionSettings)(
+class DefaultSession[V](val settings: DefaultSessionSettings)(
     implicit strategy: SessionStorageStrategy[String, String],
     ss: SessionSerializer[V, String],
     executor: ExecutionContext)
@@ -43,7 +43,9 @@ class DefaultSession[V](override val settings: DefaultSessionSettings)(
     Jwt.decode(value, settings.token, Seq(settings.algorithm))
 
   override def setSession(token: V): Directive0 = {
-    val id = settings.createTokenId
+    println(java.util.UUID.randomUUID.toString.replaceAll("-", ""))
+    val id: String = java.util.UUID.randomUUID.toString.replaceAll("-", "")
+    //settings.createTokenId
     val tokenValue = jwtEncode(id, ss.serialize(token))
     val f =
       strategy.store(id, ss.serialize(token))

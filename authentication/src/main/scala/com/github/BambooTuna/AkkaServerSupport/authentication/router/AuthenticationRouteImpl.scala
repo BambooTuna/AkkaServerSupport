@@ -8,39 +8,15 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   SignInRequestJsonImpl,
   SignUpRequestJsonImpl
 }
-import com.github.BambooTuna.AkkaServerSupport.authentication.router.AuthenticationRouteImpl.SessionToken
+import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCaseImpl
-import com.github.BambooTuna.AkkaServerSupport.core.session.{
-  DefaultSession,
-  DefaultSessionSettings,
-  DefaultSessionStorageStrategy
-}
-import com.github.BambooTuna.AkkaServerSupport.core.session.model.{
-  SessionSerializer,
-  SessionStorageStrategy,
-  StringSessionSerializer
-}
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import io.circe._
 import io.circe.generic.auto._
-import io.circe.syntax._
 
-trait AuthenticationRouteImpl extends FailFastCirceSupport {
+trait AuthenticationRouteImpl extends RouteSupport {
   type QueryP[Q] = Directive[Q] => Route
-
-  implicit val executor: ExecutionContext
-  implicit val settings: DefaultSessionSettings
-  implicit val strategy: SessionStorageStrategy[String, String]
-
-  implicit def serializer: SessionSerializer[SessionToken, String] =
-    new StringSessionSerializer(
-      _.asJson.noSpaces,
-      (in: String) => parser.decode[SessionToken](in).toTry)
-  protected val session: DefaultSession[SessionToken] =
-    new DefaultSession[SessionToken](settings)
 
   val useCase: AuthenticationUseCaseImpl = new AuthenticationUseCaseImpl
 
@@ -120,8 +96,10 @@ trait AuthenticationRouteImpl extends FailFastCirceSupport {
     }
   }
 
-}
+  def logout: QueryP[Unit] = _ {
+    session.invalidateSession() {
+      complete(StatusCodes.OK, s"""Internal DEBUG: logout successful""")
+    }
+  }
 
-object AuthenticationRouteImpl {
-  case class SessionToken(userId: String)
 }
