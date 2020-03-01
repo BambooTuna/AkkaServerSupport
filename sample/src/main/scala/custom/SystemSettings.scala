@@ -1,4 +1,4 @@
-package com.github.BambooTuna.AkkaServerSupport.authentication
+package custom
 
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

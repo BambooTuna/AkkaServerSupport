@@ -1,22 +1,24 @@
-package com.github.BambooTuna.AkkaServerSupport.authentication.router
+package custom.router
 
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives.{as, complete, entity, onComplete}
 import akka.http.scaladsl.server.{Directive, Route}
-import akka.http.scaladsl.server.Directives._
+import com.github.BambooTuna.AkkaServerSupport.authentication.json.SuccessResponseJson
+import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport
+import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
 
-import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
+import io.circe.syntax._
+import io.circe.generic.auto._
+
+import custom.json.{
   PasswordInitializationRequestJsonImpl,
   SignInRequestJsonImpl,
-  SignUpRequestJsonImpl,
-  SuccessResponseJson
+  SignUpRequestJsonImpl
 }
-import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
-import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCaseImpl
+import custom.useCase.AuthenticationUseCaseImpl
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import io.circe.syntax._
-import io.circe.generic.auto._
 
 trait AuthenticationRouteImpl extends RouteSupport {
   type QueryP[Q] = Directive[Q] => Route

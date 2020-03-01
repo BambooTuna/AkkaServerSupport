@@ -1,7 +1,8 @@
-package com.github.BambooTuna.AkkaServerSupport.authentication.model
+package custom.model
 
-import com.github.BambooTuna.AkkaServerSupport.authentication.SystemSettings
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.PasswordInitializationRequestJson
+import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredentials
+import custom.SystemSettings
 
 case class UserCredentialsImpl(id: String,
                                signinId: String,

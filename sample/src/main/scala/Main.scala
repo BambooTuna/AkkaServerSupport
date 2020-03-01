@@ -1,5 +1,3 @@
-package com.github.BambooTuna.AkkaServerSupport.authentication
-
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer

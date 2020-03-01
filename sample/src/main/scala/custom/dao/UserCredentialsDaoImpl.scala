@@ -1,8 +1,9 @@
-package com.github.BambooTuna.AkkaServerSupport.authentication.dao
+package custom.dao
 
 import cats.data.{Kleisli, OptionT}
 import cats.effect.Resource
-import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredentialsImpl
+import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
+import custom.model.UserCredentialsImpl
 import doobie.hikari.HikariTransactor
 import doobie.quill.DoobieContext
 import io.getquill.SnakeCase

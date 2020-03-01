@@ -1,27 +1,23 @@
-package com.github.BambooTuna.AkkaServerSupport.authentication
-
-import akka.http.scaladsl.model.HttpMethods._
+import akka.http.scaladsl.model.HttpMethods.{DELETE, GET, POST}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.StandardRoute
 import cats.effect.Resource
-import com.github.BambooTuna.AkkaServerSupport.authentication.router.AuthenticationRouteImpl
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
   DefaultSessionSettings,
   RedisSessionStorageStrategy
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase.AuthenticationUseCaseError
-import com.github.BambooTuna.AkkaServerSupport.core.error.CustomErrorResponse
 import com.github.BambooTuna.AkkaServerSupport.core.router.{Router, route}
 import com.github.BambooTuna.AkkaServerSupport.core.session.SessionStorageStrategy
+import custom.router.AuthenticationRouteImpl
 import doobie.hikari.HikariTransactor
-import io.circe.Error
 import monix.eval.Task
-
-import scala.concurrent.{ExecutionContext, Future}
 import monix.execution.Scheduler.Implicits.global
 import redis.RedisClient
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class Routes(val sessionSettings: DefaultSessionSettings,
              redisSession: RedisClient,

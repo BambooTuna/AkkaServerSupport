@@ -16,6 +16,12 @@ lazy val authentication = (project in file("authentication"))
   .settings(dockerSettings)
   .dependsOn(core)
 
+lazy val sample = (project in file("sample"))
+  .enablePlugins(JavaAppPackaging, AshScriptPlugin, DockerPlugin)
+  .settings(commonSettings)
+  .settings(dockerSettings)
+  .dependsOn(authentication)
+
 lazy val root =
   (project in file("."))
-    .aggregate(core, authentication)
+    .aggregate(core, authentication, sample)
