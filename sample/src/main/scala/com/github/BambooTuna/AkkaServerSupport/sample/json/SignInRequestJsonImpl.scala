@@ -1,7 +1,7 @@
-package custom.json
+package com.github.BambooTuna.AkkaServerSupport.sample.json
 
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.SignInRequestJson
-import custom.model.UserCredentialsImpl
+import com.github.BambooTuna.AkkaServerSupport.sample.model.UserCredentialsImpl
 
 case class SignInRequestJsonImpl(mail: String, pass: String)
     extends SignInRequestJson[UserCredentialsImpl] {

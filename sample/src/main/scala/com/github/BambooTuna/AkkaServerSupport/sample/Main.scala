@@ -1,3 +1,5 @@
+package com.github.BambooTuna.AkkaServerSupport.sample
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
@@ -8,8 +10,8 @@ import doobie.hikari.HikariTransactor
 import monix.eval.Task
 import redis.RedisClient
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object Main extends App {
 
@@ -61,9 +63,6 @@ object Main extends App {
         .getSeconds
         .seconds
     }
-
-  println(sessionSettings)
-  println(sessionSettings.createTokenId)
 
   val r = new Routes(sessionSettings, redisSession, dbSession)
 

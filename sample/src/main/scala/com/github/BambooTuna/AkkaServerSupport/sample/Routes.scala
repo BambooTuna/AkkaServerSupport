@@ -1,3 +1,5 @@
+package com.github.BambooTuna.AkkaServerSupport.sample
+
 import akka.http.scaladsl.model.HttpMethods.{DELETE, GET, POST}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
@@ -11,7 +13,7 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.Authentica
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase.AuthenticationUseCaseError
 import com.github.BambooTuna.AkkaServerSupport.core.router.{Router, route}
 import com.github.BambooTuna.AkkaServerSupport.core.session.SessionStorageStrategy
-import custom.router.AuthenticationRouteImpl
+import com.github.BambooTuna.AkkaServerSupport.sample.router.AuthenticationRouteImpl
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global

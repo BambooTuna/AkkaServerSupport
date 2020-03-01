@@ -1,7 +1,7 @@
-package custom
+package com.github.BambooTuna.AkkaServerSupport.sample
 
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatter;
 
 object SystemSettings {
 

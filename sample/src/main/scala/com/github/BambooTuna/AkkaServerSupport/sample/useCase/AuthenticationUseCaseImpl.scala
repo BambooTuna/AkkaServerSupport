@@ -1,13 +1,13 @@
-package custom.useCase
+package com.github.BambooTuna.AkkaServerSupport.sample.useCase
 
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase
-import custom.dao.UserCredentialsDaoImpl
-import custom.json.{
+import com.github.BambooTuna.AkkaServerSupport.sample.dao.UserCredentialsDaoImpl
+import com.github.BambooTuna.AkkaServerSupport.sample.json.{
   PasswordInitializationRequestJsonImpl,
   SignInRequestJsonImpl,
   SignUpRequestJsonImpl
 }
-import custom.model.UserCredentialsImpl
+import com.github.BambooTuna.AkkaServerSupport.sample.model.UserCredentialsImpl
 
 class AuthenticationUseCaseImpl extends AuthenticationUseCase {
   override type Record = UserCredentialsImpl

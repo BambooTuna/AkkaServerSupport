@@ -1,4 +1,4 @@
-package custom.router
+package com.github.BambooTuna.AkkaServerSupport.sample.router
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.{as, complete, entity, onComplete}
@@ -6,16 +6,14 @@ import akka.http.scaladsl.server.{Directive, Route}
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.SuccessResponseJson
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
-
-import io.circe.syntax._
-import io.circe.generic.auto._
-
-import custom.json.{
+import com.github.BambooTuna.AkkaServerSupport.sample.json.{
   PasswordInitializationRequestJsonImpl,
   SignInRequestJsonImpl,
   SignUpRequestJsonImpl
 }
-import custom.useCase.AuthenticationUseCaseImpl
+import io.circe.syntax._
+import io.circe.generic.auto._
+import com.github.BambooTuna.AkkaServerSupport.sample.useCase.AuthenticationUseCaseImpl
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

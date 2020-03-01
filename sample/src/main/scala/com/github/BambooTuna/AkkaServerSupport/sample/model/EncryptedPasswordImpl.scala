@@ -1,4 +1,4 @@
-package custom.model
+package com.github.BambooTuna.AkkaServerSupport.sample.model
 
 import java.math.BigInteger
 import java.security.MessageDigest
