@@ -1,5 +1,32 @@
 # Authentication
 
+## 使い方
+### 実装すべきクラス
+
+#### モデル
+[UserCredentialsImpl](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/model/UserCredentialsImpl.scala)
+[EncryptedPasswordImpl](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/model/EncryptedPasswordImpl.scala)
+
+#### リクエストJson
+[SignUpRequestJsonImpl](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/json/SignUpRequestJsonImpl.scala)
+[SignInRequestJsonImpl](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/json/SignInRequestJsonImpl.scala)
+[PasswordInitializationRequestJsonImpl](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/json/PasswordInitializationRequestJsonImpl.scala)
+
+#### ユースケース
+[AuthenticationUseCaseImpl](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/useCase/AuthenticationUseCaseImpl.scala)
+基本のメソッド以外に追加してもよい
+
+#### ルーター
+[AuthenticationRouteImpl](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/router/AuthenticationRouteImpl.scala)
+
+#### Dao
+[UserCredentialsDaoImpl](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/dao/UserCredentialsDaoImpl.scala)
+ユーザーの認証情報用のDao
+
+[RedisSessionStorageStrategy](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/session/RedisSessionStorageStrategy.scala)
+セッション情報を保持していくところ、サンプルではRedisを使用
+※インメモリー: InMemorySessionStorageStrategy.scala
+
 
 ## 動作確認
 

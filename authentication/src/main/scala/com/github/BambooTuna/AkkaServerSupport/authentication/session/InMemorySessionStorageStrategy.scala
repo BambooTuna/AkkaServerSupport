@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DefaultSessionStorageStrategy(implicit val executor: ExecutionContext)
+class InMemorySessionStorageStrategy(implicit val executor: ExecutionContext)
     extends SessionStorageStrategy[String, String] {
 
   val logger = LoggerFactory.getLogger(getClass)
