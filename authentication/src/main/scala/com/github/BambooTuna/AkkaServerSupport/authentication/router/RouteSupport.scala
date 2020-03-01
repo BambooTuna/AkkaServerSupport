@@ -4,9 +4,8 @@ import akka.http.scaladsl.server.StandardRoute
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
   DefaultSession,
-  DefaultSessionSettings
+  JWTSessionSettings
 }
-import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase.AuthenticationUseCaseError
 import com.github.BambooTuna.AkkaServerSupport.core.session.{
   SessionSerializer,
@@ -23,7 +22,7 @@ import scala.concurrent.ExecutionContext
 trait RouteSupport extends FailFastCirceSupport {
 
   implicit val executor: ExecutionContext
-  implicit val settings: DefaultSessionSettings
+  implicit val settings: JWTSessionSettings
   implicit val strategy: SessionStorageStrategy[String, String]
   def errorHandling(throwable: Throwable): StandardRoute
 

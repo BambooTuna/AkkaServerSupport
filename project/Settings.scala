@@ -22,10 +22,8 @@ object Settings {
       Logback.classic,
       LogstashLogbackEncoder.encoder,
       Config.core,
-      Monix.version,
-      MySQLConnectorJava.version,
-      Redis.client
-    ) ++ `doobie-quill`.all,
+      Monix.version
+    ),
     scalafmtOnCompile in Compile := true,
     scalafmtTestOnCompile in Compile := true
   )
@@ -38,7 +36,7 @@ object Settings {
     maintainer in Docker := "BambooTuna <bambootuna@gmail.com>",
     dockerUpdateLatest := true,
     dockerUsername := Some("bambootuna"),
-    mainClass in (Compile, bashScriptDefines) := Some("com.github.BambooTuna.AkkaServerSupport.authentication.Main"),
+    mainClass in (Compile, bashScriptDefines) := Some("com.github.BambooTuna.AkkaServerSupport.sample.Main"),
     packageName in Docker := name.value,
     dockerExposedPorts := Seq(8080)
   )

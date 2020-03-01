@@ -23,7 +23,7 @@ import pdi.jwt.{Jwt, JwtClaim}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-abstract class DefaultSession[V](val settings: DefaultSessionSettings)(
+abstract class DefaultSession[V](val settings: JWTSessionSettings)(
     implicit strategy: SessionStorageStrategy[String, String],
     ss: SessionSerializer[V, String],
     executor: ExecutionContext)

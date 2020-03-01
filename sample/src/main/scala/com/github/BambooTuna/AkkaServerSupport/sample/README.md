@@ -4,7 +4,7 @@
 ## 動作確認
 
 1. Build
-`$ sbt authentication/docker:publishLocal`
+`$ sbt sample/docker:publishLocal`
 
 2. サーバー起動
 `$ docker-compose up --build`

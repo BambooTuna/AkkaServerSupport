@@ -13,14 +13,19 @@ lazy val core = (project in file("core"))
 lazy val authentication = (project in file("authentication"))
   .enablePlugins(JavaAppPackaging, AshScriptPlugin, DockerPlugin)
   .settings(commonSettings)
-  .settings(dockerSettings)
   .dependsOn(core)
 
 lazy val sample = (project in file("sample"))
   .enablePlugins(JavaAppPackaging, AshScriptPlugin, DockerPlugin)
   .settings(commonSettings)
   .settings(dockerSettings)
-  .dependsOn(authentication)
+  .settings(
+    libraryDependencies ++= Seq(
+      MySQLConnectorJava.version,
+      Redis.client
+    ) ++ `doobie-quill`.all
+  )
+  .dependsOn(core, authentication)
 
 lazy val root =
   (project in file("."))

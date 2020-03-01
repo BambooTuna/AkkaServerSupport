@@ -4,7 +4,10 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import cats.effect.{Blocker, Resource}
-import com.github.BambooTuna.AkkaServerSupport.authentication.session.DefaultSessionSettings
+import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
+  ConfigSessionSettings,
+  JWTSessionSettings
+}
 import com.github.BambooTuna.AkkaServerSupport.core.domain.ServerConfig
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
@@ -50,19 +53,8 @@ object Main extends App {
       system.settings.config.getString("boot.server.port").toInt
     )
 
-  val sessionSettings: DefaultSessionSettings =
-    new DefaultSessionSettings(
-      token = system.settings.config.getString("boot.session.secret")
-    ) {
-      override val setAuthHeaderName: String =
-        system.settings.config.getString("boot.session.set_auth_header_name")
-      override val authHeaderName: String =
-        system.settings.config.getString("boot.session.auth_header_name")
-      override val expirationDate: FiniteDuration = system.settings.config
-        .getDuration("boot.session.expiration_date")
-        .getSeconds
-        .seconds
-    }
+  val sessionSettings: JWTSessionSettings =
+    new ConfigSessionSettings(system.settings.config)
 
   val r = new Routes(sessionSettings, redisSession, dbSession)
 

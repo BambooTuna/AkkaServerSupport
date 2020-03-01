@@ -5,15 +5,13 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
 import akka.http.scaladsl.server.StandardRoute
 import cats.effect.Resource
-import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
-  DefaultSessionSettings,
-  RedisSessionStorageStrategy
-}
+import com.github.BambooTuna.AkkaServerSupport.authentication.session.JWTSessionSettings
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase.AuthenticationUseCaseError
 import com.github.BambooTuna.AkkaServerSupport.core.router.{Router, route}
 import com.github.BambooTuna.AkkaServerSupport.core.session.SessionStorageStrategy
 import com.github.BambooTuna.AkkaServerSupport.sample.router.AuthenticationRouteImpl
+import com.github.BambooTuna.AkkaServerSupport.sample.session.RedisSessionStorageStrategy
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
@@ -21,7 +19,7 @@ import redis.RedisClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class Routes(val sessionSettings: DefaultSessionSettings,
+class Routes(val sessionSettings: JWTSessionSettings,
              redisSession: RedisClient,
              dbSession: Resource[Task, HikariTransactor[Task]])(
     implicit _executor: ExecutionContext) {
@@ -31,7 +29,7 @@ class Routes(val sessionSettings: DefaultSessionSettings,
       override def convertIO[O](flow: IO[O]): Future[O] =
         flow.runToFuture
       override implicit val executor: ExecutionContext = _executor
-      override implicit val settings: DefaultSessionSettings = sessionSettings
+      override implicit val settings: JWTSessionSettings = sessionSettings
       override implicit val strategy: SessionStorageStrategy[String, String] =
         new RedisSessionStorageStrategy(redisSession)
 
