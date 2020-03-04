@@ -25,7 +25,7 @@
 
 [RedisSessionStorageStrategy](https://github.com/BambooTuna/AkkaServerSupport/blob/master/sample/src/main/scala/com/github/BambooTuna/AkkaServerSupport/sample/session/RedisSessionStorageStrategy.scala)
 セッション情報を保持していくところ、サンプルではRedisを使用
-※インメモリー: InMemorySessionStorageStrategy.scala
+※インメモリー: InMemoryStorageStrategy.scala
 
 
 ## 動作確認

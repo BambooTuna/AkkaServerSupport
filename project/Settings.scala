@@ -14,6 +14,7 @@ object Settings {
       Circe.core,
       Circe.generic,
       Circe.parser,
+      Circe.shapes,
       Akka.http,
       Akka.stream,
       Akka.slf4j,

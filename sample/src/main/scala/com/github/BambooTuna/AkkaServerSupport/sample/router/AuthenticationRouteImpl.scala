@@ -6,6 +6,8 @@ import akka.http.scaladsl.server.{Directive, Route}
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.SuccessResponseJson
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
+import com.github.BambooTuna.AkkaServerSupport.authentication.session.JWTSessionSettings
+import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
 import com.github.BambooTuna.AkkaServerSupport.sample.json.{
   PasswordInitializationRequestJsonImpl,
   SignInRequestJsonImpl,
@@ -15,10 +17,14 @@ import io.circe.syntax._
 import io.circe.generic.auto._
 import com.github.BambooTuna.AkkaServerSupport.sample.useCase.AuthenticationUseCaseImpl
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-trait AuthenticationRouteImpl extends RouteSupport {
+abstract class AuthenticationRouteImpl(
+    val settings: JWTSessionSettings,
+    val strategy: StorageStrategy[String, String])(
+    implicit val executor: ExecutionContext)
+    extends RouteSupport {
   type QueryP[Q] = Directive[Q] => Route
 
   val useCase: AuthenticationUseCaseImpl = new AuthenticationUseCaseImpl

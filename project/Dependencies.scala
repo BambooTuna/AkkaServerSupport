@@ -21,7 +21,7 @@ object Circe {
   val parser: ModuleID  = "io.circe" %% "circe-parser" % version
   val generic: ModuleID = "io.circe" %% "circe-generic" % version
   val extras: ModuleID  = "io.circe" %% "circe-generic-extras" % version
-
+  val shapes: ModuleID = "io.circe" %% "circe-shapes" % version
 }
 
 object Logback {

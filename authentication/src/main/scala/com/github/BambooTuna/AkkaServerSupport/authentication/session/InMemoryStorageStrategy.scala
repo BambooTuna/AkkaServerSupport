@@ -1,12 +1,12 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.session
 
-import com.github.BambooTuna.AkkaServerSupport.core.session.SessionStorageStrategy
+import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class InMemorySessionStorageStrategy(implicit val executor: ExecutionContext)
-    extends SessionStorageStrategy[String, String] {
+class InMemoryStorageStrategy(implicit val executor: ExecutionContext)
+    extends StorageStrategy[String, String] {
 
   val logger = LoggerFactory.getLogger(getClass)
 

@@ -9,7 +9,7 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase.AuthenticationUseCaseError
 import com.github.BambooTuna.AkkaServerSupport.core.session.{
   SessionSerializer,
-  SessionStorageStrategy,
+  StorageStrategy,
   StringSessionSerializer
 }
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
@@ -23,7 +23,7 @@ trait RouteSupport extends FailFastCirceSupport {
 
   implicit val executor: ExecutionContext
   implicit val settings: JWTSessionSettings
-  implicit val strategy: SessionStorageStrategy[String, String]
+  implicit val strategy: StorageStrategy[String, String]
   def errorHandling(throwable: Throwable): StandardRoute
 
   implicit def serializer: SessionSerializer[SessionToken, String] =
