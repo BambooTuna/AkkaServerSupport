@@ -1,5 +1,6 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.useCase
 
+import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import cats.Monad
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
@@ -7,6 +8,7 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   SignInRequestJson,
   SignUpRequestJson
 }
+import com.github.BambooTuna.AkkaServerSupport.authentication.router.error.CustomError
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase._
 
 trait AuthenticationUseCase {
@@ -57,8 +59,17 @@ trait AuthenticationUseCase {
 }
 
 object AuthenticationUseCase {
-  sealed trait AuthenticationUseCaseError
-  case object SignUpInsertError extends AuthenticationUseCaseError
-  case object SignInIdOrPassWrongError extends AuthenticationUseCaseError
-  case object CantFoundUserError extends AuthenticationUseCaseError
+  sealed trait AuthenticationUseCaseError extends CustomError
+  case object SignUpInsertError extends AuthenticationUseCaseError {
+    override val statusCode: StatusCode = StatusCodes.BadRequest
+    override val message: Option[String] = Some("SignUpInsertError")
+  }
+  case object SignInIdOrPassWrongError extends AuthenticationUseCaseError {
+    override val statusCode: StatusCode = StatusCodes.BadRequest
+    override val message: Option[String] = Some("SignInIdOrPassWrongError")
+  }
+  case object CantFoundUserError extends AuthenticationUseCaseError {
+    override val statusCode: StatusCode = StatusCodes.BadRequest
+    override val message: Option[String] = Some("CantFoundUserError")
+  }
 }

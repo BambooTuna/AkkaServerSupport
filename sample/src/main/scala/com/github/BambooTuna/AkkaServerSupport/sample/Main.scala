@@ -11,12 +11,9 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
 }
 import com.github.BambooTuna.AkkaServerSupport.core.domain.ServerConfig
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
-import com.github.BambooTuna.AkkaServerSupport.sample.session.RedisStorageStrategy
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
-import redis.RedisClient
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object Main extends App {
@@ -41,15 +38,18 @@ object Main extends App {
 
   val redisSession: StorageStrategy[String, String] =
     new InMemoryStorageStrategy()
+
+  val redisOAuth: StorageStrategy[String, String] =
+    new InMemoryStorageStrategy()
 //    RedisStorageStrategy.fromConfig(system.settings.config)
+
+  val r = new Routes(sessionSettings, redisSession, redisOAuth, dbSession)
 
   val serverConfig: ServerConfig =
     ServerConfig(
       system.settings.config.getString("boot.server.host"),
       system.settings.config.getString("boot.server.port").toInt
     )
-
-  val r = new Routes(sessionSettings, redisSession, dbSession)
 
   val bindingFuture =
     Http().bindAndHandle(r.createRoute.create,

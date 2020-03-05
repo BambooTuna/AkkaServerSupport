@@ -6,7 +6,10 @@ import akka.http.scaladsl.server.{Directive, Route}
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.SuccessResponseJson
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
-import com.github.BambooTuna.AkkaServerSupport.authentication.session.JWTSessionSettings
+import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
+  DefaultSession,
+  JWTSessionSettings
+}
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
 import com.github.BambooTuna.AkkaServerSupport.sample.json.{
   PasswordInitializationRequestJsonImpl,
@@ -20,12 +23,11 @@ import com.github.BambooTuna.AkkaServerSupport.sample.useCase.AuthenticationUseC
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
+import monix.execution.Scheduler.Implicits.global
+
 abstract class AuthenticationRouteImpl(
-    val settings: JWTSessionSettings,
-    val strategy: StorageStrategy[String, String])(
-    implicit val executor: ExecutionContext)
+    val session: DefaultSession[SessionToken])
     extends RouteSupport {
-  type QueryP[Q] = Directive[Q] => Route
 
   val useCase: AuthenticationUseCaseImpl = new AuthenticationUseCaseImpl
 
@@ -40,7 +42,8 @@ abstract class AuthenticationRouteImpl(
   type SignInRequest = useCase.SignInRequest
   type PasswordInitializationRequest = useCase.PasswordInitializationRequest
 
-  def convertIO[O](flow: IO[O]): Future[O]
+  def convertIO[O](flow: IO[O]): Future[O] =
+    flow.runToFuture
 
   def signUpRoute(dbSession: DBSession): QueryP[Unit] = _ {
     entity(as[SignUpRequestJsonImpl]) { json: SignUpRequestJsonImpl =>

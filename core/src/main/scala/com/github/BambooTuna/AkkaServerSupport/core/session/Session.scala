@@ -8,6 +8,7 @@ import com.github.BambooTuna.AkkaServerSupport.core.error.ErrorHandleSupport
 trait Session[K, V] extends ErrorHandleSupport {
 
   val settings: SessionSettings
+  val strategy: StorageStrategy[K, String]
 
   def setSession(token: V): Directive0
   def requiredSession: Directive1[V]
