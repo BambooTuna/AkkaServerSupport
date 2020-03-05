@@ -11,6 +11,7 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
 }
 import com.github.BambooTuna.AkkaServerSupport.core.domain.ServerConfig
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
+import com.github.BambooTuna.AkkaServerSupport.sample.session.RedisStorageStrategy
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
 
@@ -37,10 +38,12 @@ object Main extends App {
     new ConfigSessionSettings(system.settings.config)
 
   val redisSession: StorageStrategy[String, String] =
-    new InMemoryStorageStrategy()
+    RedisStorageStrategy.fromConfig(system.settings.config)
+//    new InMemoryStorageStrategy()
 
   val redisOAuth: StorageStrategy[String, String] =
-    new InMemoryStorageStrategy()
+    RedisStorageStrategy.fromConfig(system.settings.config)
+//    new InMemoryStorageStrategy()
 //    RedisStorageStrategy.fromConfig(system.settings.config)
 
   val r = new Routes(sessionSettings, redisSession, redisOAuth, dbSession)
