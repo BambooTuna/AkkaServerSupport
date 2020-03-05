@@ -6,14 +6,14 @@ import akka.stream.ActorMaterializer
 import cats.effect.{Blocker, Resource}
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
   ConfigSessionSettings,
+  InMemoryStorageStrategy,
   JWTSessionSettings
 }
 import com.github.BambooTuna.AkkaServerSupport.core.domain.ServerConfig
+import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
-import redis.RedisClient
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object Main extends App {
@@ -33,30 +33,23 @@ object Main extends App {
       Blocker.liftExecutionContext(ec)
     )
 
-  val redisSession: RedisClient =
-    RedisClient(
-      host = system.settings.config.getString("redis.db.host"),
-      port = system.settings.config.getInt("redis.db.port"),
-      password = Some(system.settings.config.getString("redis.db.password"))
-        .filter(_.nonEmpty),
-      db = Some(system.settings.config.getInt("redis.db.db")),
-      connectTimeout = Some(
-        system.settings.config
-          .getDuration("redis.db.connect-timeout")
-          .toMillis
-          .millis)
-    )
+  implicit val sessionSettings: JWTSessionSettings =
+    new ConfigSessionSettings(system.settings.config)
+
+  val redisSession: StorageStrategy[String, String] =
+    new InMemoryStorageStrategy()
+
+  val redisOAuth: StorageStrategy[String, String] =
+    new InMemoryStorageStrategy()
+//    RedisStorageStrategy.fromConfig(system.settings.config)
+
+  val r = new Routes(sessionSettings, redisSession, redisOAuth, dbSession)
 
   val serverConfig: ServerConfig =
     ServerConfig(
       system.settings.config.getString("boot.server.host"),
       system.settings.config.getString("boot.server.port").toInt
     )
-
-  val sessionSettings: JWTSessionSettings =
-    new ConfigSessionSettings(system.settings.config)
-
-  val r = new Routes(sessionSettings, redisSession, dbSession)
 
   val bindingFuture =
     Http().bindAndHandle(r.createRoute.create,

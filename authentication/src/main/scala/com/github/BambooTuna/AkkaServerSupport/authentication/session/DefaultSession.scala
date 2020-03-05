@@ -15,7 +15,7 @@ import com.github.BambooTuna.AkkaServerSupport.core.session.Session.InvalidToken
 import com.github.BambooTuna.AkkaServerSupport.core.session.{
   Session,
   SessionSerializer,
-  SessionStorageStrategy,
+  StorageStrategy,
   StringSessionSerializer
 }
 import pdi.jwt.{Jwt, JwtClaim}
@@ -23,9 +23,9 @@ import pdi.jwt.{Jwt, JwtClaim}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-abstract class DefaultSession[V](val settings: JWTSessionSettings)(
-    implicit strategy: SessionStorageStrategy[String, String],
-    ss: SessionSerializer[V, String],
+abstract class DefaultSession[V](val settings: JWTSessionSettings,
+                                 val strategy: StorageStrategy[String, String])(
+    implicit ss: SessionSerializer[V, String],
     executor: ExecutionContext)
     extends Session[String, V]
     with ErrorHandleSupport {

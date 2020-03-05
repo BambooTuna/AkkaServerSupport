@@ -1,60 +1,61 @@
 package com.github.BambooTuna.AkkaServerSupport.sample
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpMethods.{DELETE, GET, POST}
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.complete
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
+import akka.stream.Materializer
 import cats.effect.Resource
-import com.github.BambooTuna.AkkaServerSupport.authentication.session.JWTSessionSettings
-import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase
-import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase.AuthenticationUseCaseError
+import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
+import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
+  DefaultSession,
+  JWTSessionSettings
+}
+import com.github.BambooTuna.AkkaServerSupport.cooperation.model.{
+  ClientConfig,
+  OAuth2Settings
+}
 import com.github.BambooTuna.AkkaServerSupport.core.router.{Router, route}
-import com.github.BambooTuna.AkkaServerSupport.core.session.SessionStorageStrategy
+import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
+import com.github.BambooTuna.AkkaServerSupport.sample.oauth.LineOAuth2RouteImpl
 import com.github.BambooTuna.AkkaServerSupport.sample.router.AuthenticationRouteImpl
-import com.github.BambooTuna.AkkaServerSupport.sample.session.RedisSessionStorageStrategy
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
 import monix.execution.Scheduler.Implicits.global
-import redis.RedisClient
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
-class Routes(val sessionSettings: JWTSessionSettings,
-             redisSession: RedisClient,
+class Routes(sessionSettings: JWTSessionSettings,
+             sessionStorage: StorageStrategy[String, String],
+             oauthStorage: StorageStrategy[String, String],
              dbSession: Resource[Task, HikariTransactor[Task]])(
-    implicit _executor: ExecutionContext) {
+    implicit system: ActorSystem,
+    mat: Materializer,
+    executor: ExecutionContext) {
+
+  val session =
+    new DefaultSession[SessionToken](sessionSettings, sessionStorage) {
+      override def fromThrowable(throwable: Throwable): StandardRoute =
+        complete(StatusCodes.InternalServerError)
+    }
 
   val authenticationRoute =
-    new AuthenticationRouteImpl {
-      override def convertIO[O](flow: IO[O]): Future[O] =
-        flow.runToFuture
-      override implicit val executor: ExecutionContext = _executor
-      override implicit val settings: JWTSessionSettings = sessionSettings
-      override implicit val strategy: SessionStorageStrategy[String, String] =
-        new RedisSessionStorageStrategy(redisSession)
+    new AuthenticationRouteImpl(session) {
+      override def errorHandling(throwable: Throwable): StandardRoute =
+        complete(StatusCodes.InternalServerError)
+    }
 
-      override def errorHandling(throwable: Throwable): StandardRoute = {
-        throwable match {
-          case e: RuntimeException =>
-            complete(StatusCodes.InternalServerError, e.getMessage)
-          case e: Exception =>
-            complete(StatusCodes.BadRequest, e.getMessage)
-        }
-      }
-
-      override def customErrorHandler(
-          error: AuthenticationUseCaseError): StandardRoute = error match {
-        case AuthenticationUseCase.SignUpInsertError =>
-          complete(StatusCodes.Conflict, "メールアドレスが使用されています")
-        case AuthenticationUseCase.CantFoundUserError =>
-          complete(StatusCodes.NotFound, "ユーザーが存在しません")
-        case AuthenticationUseCase.SignInIdOrPassWrongError =>
-          complete(StatusCodes.Forbidden, "認証失敗")
-      }
+  val lineOAuth = OAuth2Settings(
+    ClientConfig.fromConfig("line", system.settings.config),
+    oauthStorage)
+  val lineOAuth2Route =
+    new LineOAuth2RouteImpl(session, lineOAuth) {
+      override def errorHandling(throwable: Throwable): StandardRoute =
+        complete(StatusCodes.InternalServerError)
     }
 
   def createRoute: Router = {
-
     Router(
       route(POST, "signup", authenticationRoute.signUpRoute(dbSession)),
       route(POST, "signin", authenticationRoute.signInRoute(dbSession)),
@@ -63,6 +64,13 @@ class Routes(val sessionSettings: JWTSessionSettings,
             authenticationRoute.passwordInitializationRoute(dbSession)),
       route(GET, "health", authenticationRoute.healthCheck),
       route(DELETE, "logout", authenticationRoute.logout),
+      route(GET,
+            "signup" / "line",
+            lineOAuth2Route.authenticationCodeIssuanceRoute),
+      route(
+        GET,
+        "oauth2",
+        lineOAuth2Route.getAccessTokenFromAuthenticationCodeRoute(dbSession))
     )
   }
 

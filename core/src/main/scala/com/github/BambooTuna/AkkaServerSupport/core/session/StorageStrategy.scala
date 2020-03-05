@@ -2,7 +2,7 @@ package com.github.BambooTuna.AkkaServerSupport.core.session
 
 import scala.concurrent.Future
 
-trait SessionStorageStrategy[K, V] {
+trait StorageStrategy[K, V] {
 
   def store(key: K, value: V): Future[Unit]
 

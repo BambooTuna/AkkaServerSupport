@@ -15,6 +15,11 @@ lazy val authentication = (project in file("authentication"))
   .settings(commonSettings)
   .dependsOn(core)
 
+lazy val cooperation = (project in file("cooperation"))
+  .enablePlugins(JavaAppPackaging, AshScriptPlugin, DockerPlugin)
+  .settings(commonSettings)
+  .dependsOn(authentication)
+
 lazy val sample = (project in file("sample"))
   .enablePlugins(JavaAppPackaging, AshScriptPlugin, DockerPlugin)
   .settings(commonSettings)
@@ -25,8 +30,8 @@ lazy val sample = (project in file("sample"))
       Redis.client
     ) ++ `doobie-quill`.all
   )
-  .dependsOn(core, authentication)
+  .dependsOn(cooperation)
 
 lazy val root =
   (project in file("."))
-    .aggregate(core, authentication, sample)
+    .aggregate(core, authentication, cooperation, sample)

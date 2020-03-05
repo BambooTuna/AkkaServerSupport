@@ -9,3 +9,9 @@ CREATE TABLE `user_credentials` (
     PRIMARY KEY (`id`),
     UNIQUE KEY (`mail`)
 )
+
+CREATE TABLE `linked_user_credentials` (
+    `id` VARCHAR(255) NOT NULL,
+    `service_name` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`id`)
+)
