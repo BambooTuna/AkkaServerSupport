@@ -65,11 +65,11 @@ class Routes(sessionSettings: JWTSessionSettings,
       route(GET, "health", authenticationRoute.healthCheck),
       route(DELETE, "logout", authenticationRoute.logout),
       route(GET,
-            "signup" / "line",
+            "oauth2" / "direct" / "line",
             lineOAuth2Route.authenticationCodeIssuanceRoute),
       route(
         GET,
-        "oauth2",
+        "oauth2" / "signin" / "line",
         lineOAuth2Route.getAccessTokenFromAuthenticationCodeRoute(dbSession))
     )
   }

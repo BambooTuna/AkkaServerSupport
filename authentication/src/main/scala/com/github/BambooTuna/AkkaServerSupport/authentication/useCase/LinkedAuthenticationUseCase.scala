@@ -50,8 +50,8 @@ trait LinkedAuthenticationUseCase {
 object LinkedAuthenticationUseCase {
   sealed trait LinkedAuthenticationUseCaseError extends CustomError
   case object RegisteredError extends LinkedAuthenticationUseCaseError {
-    override val statusCode: StatusCode = StatusCodes.BadRequest
-    override val message: Option[String] = Some("RegisteredError")
+    override val statusCode: StatusCode = StatusCodes.TemporaryRedirect
+    override val message: Option[String] = Some("連携済")
   }
   case object CooperationFailureError extends LinkedAuthenticationUseCaseError {
     override val statusCode: StatusCode = StatusCodes.BadRequest

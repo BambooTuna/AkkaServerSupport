@@ -9,12 +9,16 @@ import akka.http.scaladsl.server.Directives.{
   redirect
 }
 import akka.stream.Materializer
-import cats.data.EitherT
+import cats.data.{EitherT, Kleisli}
 import cats.effect.Resource
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport
-import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
+import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.{
+  QueryParameterParseError,
+  SessionToken
+}
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.error.CustomError
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.DefaultSession
+import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.LinkedAuthenticationUseCase.LinkedAuthenticationUseCaseError
 import com.github.BambooTuna.AkkaServerSupport.cooperation.model.OAuth2Settings
 import com.github.BambooTuna.AkkaServerSupport.sample.command.LinkedSignUpInRequestCommandImpl
 import com.github.BambooTuna.AkkaServerSupport.sample.useCase.LinkedAuthenticationUseCaseImpl
@@ -68,23 +72,43 @@ abstract class LineOAuth2RouteImpl(
                 .runAccessTokenAcquisitionRequest(value)
               id <- EitherT { Task.pure(useCase.decodeIdToken(res)) }
               r <- EitherT[Task, CustomError, authenticationUseCase.Record] {
+                val command =
+                  LinkedSignUpInRequestCommandImpl(
+                    id,
+                    settings.clientConfig.serviceName)
                 authenticationUseCase
-                  .signUp(
-                    LinkedSignUpInRequestCommandImpl(
-                      id,
-                      settings.clientConfig.serviceName))
+                  .signUp(command)
+                  .flatMap {
+                    case Right(value) =>
+                      Kleisli.liftF[
+                        authenticationUseCase.IO,
+                        authenticationUseCase.linkedUserCredentialsDao.DBSession,
+                        Either[LinkedAuthenticationUseCaseError,
+                               authenticationUseCase.Record]] {
+                        Task.pure(Right(value))
+                      }
+                    case Left(_) => authenticationUseCase.signIn(command)
+                  }
                   .run(dbSession)
               }
             } yield r).value.runToFuture
 
           onComplete(f) {
             case Success(Right(value)) =>
-              complete(StatusCodes.OK, value.toString)
+              session
+                .setSession(
+                  SessionToken(value.id,
+                               Some(settings.clientConfig.serviceName))) {
+                  complete(StatusCodes.OK)
+                }
             case Success(Left(value)) =>
-              complete(StatusCodes.BadRequest, value.message)
-            case Failure(exception) => errorHandling(exception)
+              println(value.toString)
+              customErrorHandler(value)
+            case Failure(exception) =>
+              println(exception.getMessage)
+              errorHandling(exception)
           }
-        case Left(value) => errorHandling(value)
+        case Left(_) => customErrorHandler(QueryParameterParseError)
       }
     }
   }

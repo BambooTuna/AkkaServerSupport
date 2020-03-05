@@ -1,5 +1,6 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.router
 
+import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import akka.http.scaladsl.server.{Directive, Route, StandardRoute}
 import akka.http.scaladsl.server.Directives._
 import com.github.BambooTuna.AkkaServerSupport.authentication.router.RouteSupport.SessionToken
@@ -37,5 +38,11 @@ object RouteSupport {
       _.asJson.noSpaces,
       (in: String) => parser.decode[SessionToken](in).toTry)
 
-  case class SessionToken(userId: String)
+  case class SessionToken(userId: String, cooperation: Option[String] = None)
+
+  sealed trait InRouterError extends CustomError
+  case object QueryParameterParseError extends InRouterError {
+    override val statusCode: StatusCode = StatusCodes.BadRequest
+    override val message: Option[String] = Some("QueryParameterParseError")
+  }
 }
