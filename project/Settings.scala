@@ -42,12 +42,13 @@ object Settings {
     dockerExposedPorts := Seq(8080)
   )
 
-  lazy val packageSetting = Seq(
-    organization := "com.github.BambooTuna",
-    scalaVersion := "2.12.8",
-    version := "1.0.0-SNAPSHOT",
-    name := "AkkaServerSupport",
-    publishTo := Some(Resolver.file("AkkaServerSupport",file("."))(Patterns(true, Resolver.mavenStyleBasePattern)))
-  )
+  lazy val packageSetting = (subName: String) =>
+    Seq(
+      organization := "com.github.BambooTuna",
+      scalaVersion := "2.12.8",
+      version := "1.0.0-SNAPSHOT",
+      name := s"AkkaServerSupport$subName",
+      publishTo := Some(Resolver.file("AkkaServerSupport",file("."))(Patterns(true, Resolver.mavenStyleBasePattern)))
+    )
 
 }
