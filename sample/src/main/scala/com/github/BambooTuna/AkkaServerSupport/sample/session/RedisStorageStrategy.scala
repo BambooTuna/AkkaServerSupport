@@ -34,19 +34,20 @@ class RedisStorageStrategy(dbSession: RedisClient)(
 }
 
 object RedisStorageStrategy {
-  def fromConfig(config: Config)(
+  def fromConfig(config: Config, name: String)(
       implicit executor: ExecutionContext,
       settings: JWTSessionSettings): RedisStorageStrategy = {
     val redisSession: RedisClient =
       RedisClient(
-        host = system.settings.config.getString("redis.db.host"),
-        port = system.settings.config.getInt("redis.db.port"),
-        password = Some(system.settings.config.getString("redis.db.password"))
-          .filter(_.nonEmpty),
-        db = Some(system.settings.config.getInt("redis.db.db")),
+        host = system.settings.config.getString(s"redis.${name}.host"),
+        port = system.settings.config.getInt(s"redis.${name}.port"),
+        password =
+          Some(system.settings.config.getString(s"redis.${name}.password"))
+            .filter(_.nonEmpty),
+        db = Some(system.settings.config.getInt(s"redis.${name}.db")),
         connectTimeout = Some(
           system.settings.config
-            .getDuration("redis.db.connect-timeout")
+            .getDuration(s"redis.${name}.connect-timeout")
             .toMillis
             .millis)
       )

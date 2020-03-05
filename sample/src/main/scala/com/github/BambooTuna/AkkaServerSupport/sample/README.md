@@ -79,7 +79,7 @@ $ curl -X DELETE localhost:8080/logout -H "Set-Authorization: $SESSION_TOKEN"
 ### SNS連携
 編集中...
 ```bash
-$ curl -X GET http://localhost:8080/oauth2/direct/line
+$ curl -X POST http://localhost:8080/oauth2/signin/line
 $ curl -X GET http://localhost:8080/oauth2/signin/line
 ```
 

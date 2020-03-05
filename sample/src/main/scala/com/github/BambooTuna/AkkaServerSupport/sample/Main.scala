@@ -38,13 +38,10 @@ object Main extends App {
     new ConfigSessionSettings(system.settings.config)
 
   val redisSession: StorageStrategy[String, String] =
-    RedisStorageStrategy.fromConfig(system.settings.config)
-//    new InMemoryStorageStrategy()
+    RedisStorageStrategy.fromConfig(system.settings.config, "session")
 
   val redisOAuth: StorageStrategy[String, String] =
-    RedisStorageStrategy.fromConfig(system.settings.config)
-//    new InMemoryStorageStrategy()
-//    RedisStorageStrategy.fromConfig(system.settings.config)
+    RedisStorageStrategy.fromConfig(system.settings.config, "oauth2")
 
   val r = new Routes(sessionSettings, redisSession, redisOAuth, dbSession)
 

@@ -2,8 +2,10 @@ package com.github.BambooTuna.AkkaServerSupport.authentication.model
 
 trait LinkedUserCredentials {
   type Id
-  type Service
+  type ServiceId
+  type ServiceName
 
   val id: Id
-  val service: Service
+  val serviceId: ServiceId
+  val serviceName: ServiceName
 }

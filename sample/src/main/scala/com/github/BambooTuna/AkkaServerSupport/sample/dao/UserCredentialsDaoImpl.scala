@@ -75,7 +75,7 @@ class UserCredentialsDaoImpl extends UserCredentialsDao {
       Kleisli { implicit ctx: DBSession =>
         val q = quote {
           query[Record]
-            .filter(_.id == lift(signinId))
+            .filter(_.signinId == lift(signinId))
             .delete
         }
         ctx
