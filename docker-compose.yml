@@ -21,9 +21,11 @@ services:
     ports:
       - 8080:8080
     environment:
-      - REDIS_HOST=redis
+      - REDIS_HOST_SESSION=redis
+      - REDIS_HOST_OAUTH2=redis
       - MYSQL_HOST=mysql
       - MYSQL_DATABASE=akkaserversupport
+
 
     depends_on:
       - mysql

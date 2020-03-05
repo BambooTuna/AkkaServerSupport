@@ -26,6 +26,7 @@ import com.github.BambooTuna.AkkaServerSupport.cooperation.model.{
 }
 import com.github.BambooTuna.AkkaServerSupport.cooperation.useCase.OAuth2UseCase.{
   AccessTokenAcquisitionResponseFailedError,
+  CSRFTokenForbiddenError,
   HttpRequestError,
   OAuth2UseCaseError
 }
@@ -109,7 +110,8 @@ abstract class OAuth2UseCase(settings: OAuth2Settings) {
         for {
           _ <- settings.strategy
             .find(key)
-            .filter(_.contains(settings.clientConfig.serviceName))
+            .map(_.filter(_ == settings.clientConfig.serviceName)
+              .toRight(CSRFTokenForbiddenError))
           _ <- settings.strategy.remove(key)
           r <- Http()
             .singleRequest(httpRequest)
@@ -144,6 +146,10 @@ object OAuth2UseCase {
       extends OAuth2UseCaseError {
     override val statusCode: StatusCode = StatusCodes.BadRequest
     override val message: Option[String] = response.error_description
+  }
+  case object CSRFTokenForbiddenError extends OAuth2UseCaseError {
+    override val statusCode: StatusCode = StatusCodes.Forbidden
+    override val message: Option[String] = Some("CSRFTokenForbiddenError")
   }
   case object HttpRequestError extends OAuth2UseCaseError {
     override val statusCode: StatusCode = StatusCodes.InternalServerError

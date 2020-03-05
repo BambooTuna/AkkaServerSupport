@@ -20,7 +20,10 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.router.error.Custo
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.DefaultSession
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.LinkedAuthenticationUseCase.LinkedAuthenticationUseCaseError
 import com.github.BambooTuna.AkkaServerSupport.cooperation.model.OAuth2Settings
-import com.github.BambooTuna.AkkaServerSupport.sample.command.LinkedSignUpInRequestCommandImpl
+import com.github.BambooTuna.AkkaServerSupport.sample.command.{
+  LinkedSignInRequestCommandImpl,
+  LinkedSignUpRequestCommandImpl
+}
 import com.github.BambooTuna.AkkaServerSupport.sample.useCase.LinkedAuthenticationUseCaseImpl
 import doobie.hikari.HikariTransactor
 
@@ -72,12 +75,11 @@ abstract class LineOAuth2RouteImpl(
                 .runAccessTokenAcquisitionRequest(value)
               id <- EitherT { Task.pure(useCase.decodeIdToken(res)) }
               r <- EitherT[Task, CustomError, authenticationUseCase.Record] {
-                val command =
-                  LinkedSignUpInRequestCommandImpl(
-                    id,
-                    settings.clientConfig.serviceName)
                 authenticationUseCase
-                  .signUp(command)
+                  .signUp(
+                    LinkedSignUpRequestCommandImpl(
+                      id,
+                      settings.clientConfig.serviceName))
                   .flatMap {
                     case Right(value) =>
                       Kleisli.liftF[
@@ -87,7 +89,11 @@ abstract class LineOAuth2RouteImpl(
                                authenticationUseCase.Record]] {
                         Task.pure(Right(value))
                       }
-                    case Left(_) => authenticationUseCase.signIn(command)
+                    case Left(_) =>
+                      authenticationUseCase.signIn(
+                        LinkedSignInRequestCommandImpl(
+                          id,
+                          settings.clientConfig.serviceName))
                   }
                   .run(dbSession)
               }

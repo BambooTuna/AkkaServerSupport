@@ -8,10 +8,12 @@ CREATE TABLE `user_credentials` (
     `pass` VARCHAR(255) NOT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`mail`)
-)
+);
 
 CREATE TABLE `linked_user_credentials` (
     `id` VARCHAR(255) NOT NULL,
+    `service_id` VARCHAR(255) NOT NULL,
     `service_name` VARCHAR(255) NOT NULL,
-    PRIMARY KEY (`id`)
-)
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`service_id`, `service_name`)
+);

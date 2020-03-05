@@ -14,6 +14,7 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
   override type DBSession = Resource[IO, HikariTransactor[IO]]
   override type Record = LinkedUserCredentialsImpl
   override type Id = Record#Id
+  override type ServiceId = Record#ServiceId
 
   val dc: DoobieContext.MySQL[SnakeCase] = new DoobieContext.MySQL(SnakeCase)
   import dc._
@@ -23,7 +24,8 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
     schemaMeta[Record](
       "linked_user_credentials",
       _.id -> "id",
-      _.service -> "service_name",
+      _.serviceId -> "service_id",
+      _.serviceName -> "service_name",
     )
 
   override def insert(
@@ -51,17 +53,31 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
       }
     }
 
-  override def delete(id: String): OptionT[M, String] =
+  override def resolveByServiceId(
+      serviceId: String): OptionT[M, LinkedUserCredentialsImpl] =
+    OptionT[M, Record] {
+      Kleisli { implicit ctx: DBSession =>
+        val q = quote {
+          query[Record]
+            .filter(_.serviceId == lift(serviceId))
+        }
+        ctx
+          .use(x => run(q).transact(x))
+          .map(_.headOption)
+      }
+    }
+
+  override def delete(serviceId: String): OptionT[M, String] =
     OptionT[M, Id] {
       Kleisli { implicit ctx: DBSession =>
         val q = quote {
           query[Record]
-            .filter(_.id == lift(id))
+            .filter(_.serviceId == lift(serviceId))
             .delete
         }
         ctx
           .use(x => run(q).transact(x))
-          .map(a => if (a > 0) Some(id) else None)
+          .map(a => if (a > 0) Some(serviceId) else None)
       }
     }
 
