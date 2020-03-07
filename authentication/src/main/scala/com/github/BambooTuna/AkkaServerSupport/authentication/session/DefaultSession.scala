@@ -60,7 +60,7 @@ abstract class DefaultSession[V](val settings: JWTSessionSettings,
   }
 
   override def requiredSession: Directive1[V] =
-    optionalHeaderValueByName(settings.setAuthHeaderName)
+    optionalHeaderValueByName(settings.authHeaderName)
       .flatMap {
         case Some(value) =>
           val f =
@@ -80,14 +80,14 @@ abstract class DefaultSession[V](val settings: JWTSessionSettings,
             case Success(Left(value))  => reject(AuthorizationFailedRejection)
             case Failure(e)            => fromThrowable(e)
           }
-        case None => reject(MissingHeaderRejection(settings.setAuthHeaderName))
+        case None => reject(MissingHeaderRejection(settings.authHeaderName))
       }
 
   override def invalidateSession(): Directive0 =
-    optionalHeaderValueByName(settings.setAuthHeaderName)
+    optionalHeaderValueByName(settings.authHeaderName)
       .flatMap {
         case Some(value) => invalidateSession(value)
-        case None        => reject(MissingHeaderRejection(settings.setAuthHeaderName))
+        case None        => reject(MissingHeaderRejection(settings.authHeaderName))
       }
 
   override def invalidateSession(value: String): Directive0 = {
