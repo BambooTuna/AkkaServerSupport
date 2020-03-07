@@ -16,7 +16,7 @@ trait Session[K, V] extends ErrorHandleSupport {
   def invalidateSession(value: String): Directive0
 
   def addAuthHeader(token: String): Directive0 =
-    respondWithHeaders(RawHeader(settings.authHeaderName, token))
+    respondWithHeaders(RawHeader(settings.setAuthHeaderName, token))
 
 }
 

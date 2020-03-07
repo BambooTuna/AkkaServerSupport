@@ -39,14 +39,14 @@ object RedisStorageStrategy {
       settings: JWTSessionSettings): RedisStorageStrategy = {
     val redisSession: RedisClient =
       RedisClient(
-        host = system.settings.config.getString(s"redis.${name}.host"),
-        port = system.settings.config.getInt(s"redis.${name}.port"),
+        host = config.getString(s"redis.${name}.host"),
+        port = config.getInt(s"redis.${name}.port"),
         password =
-          Some(system.settings.config.getString(s"redis.${name}.password"))
+          Some(config.getString(s"redis.${name}.password"))
             .filter(_.nonEmpty),
-        db = Some(system.settings.config.getInt(s"redis.${name}.db")),
+        db = Some(config.getInt(s"redis.${name}.db")),
         connectTimeout = Some(
-          system.settings.config
+          config
             .getDuration(s"redis.${name}.connect-timeout")
             .toMillis
             .millis)

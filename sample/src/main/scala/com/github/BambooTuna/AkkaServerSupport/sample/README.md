@@ -62,18 +62,18 @@ $ curl -X POST -H "Content-Type: application/json" -d '{"mail":"bambootuna@gmail
 
 $ export SESSION_TOKEN=~~~
 ```
-HeaderName=`Authorization`にセッショントークンがセットされた状態でレスポンスが帰ってくるのでそれを使う
+HeaderName=`Set-Authorization`にセッショントークンがセットされた状態でレスポンスが帰ってくるのでそれを使う
 
 ### HealthCheck
 セッショントークンが有効か確認する
-HeaderName=`Set-Authorization`にセッショントークンをセットする
+HeaderName=`Authorization`にセッショントークンをセットする
 ```bash
-$ curl -X GET localhost:8080/health -H "Set-Authorization: $SESSION_TOKEN"
+$ curl -X GET localhost:8080/health -H "Authorization: $SESSION_TOKEN"
 ```
 
 ### LogOut
 ```bash
-$ curl -X DELETE localhost:8080/logout -H "Set-Authorization: $SESSION_TOKEN"
+$ curl -X DELETE localhost:8080/logout -H "Authorization: $SESSION_TOKEN"
 ```
 
 ### SNS連携
