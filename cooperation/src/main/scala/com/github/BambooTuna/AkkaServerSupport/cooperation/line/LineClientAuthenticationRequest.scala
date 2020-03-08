@@ -1,6 +1,10 @@
 package com.github.BambooTuna.AkkaServerSupport.cooperation.line
 
-import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.ClientAuthenticationRequest
+import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.{
+  ClientAuthenticationRequest,
+  ClientConfig
+}
+import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.serializer.ClientAuthenticationSerializer
 import io.circe.Encoder
 import io.circe.Json._
 
@@ -32,5 +36,23 @@ object LineClientAuthenticationRequest {
         "ui_locales" -> p.ui_locales.fold(Null)(fromString),
         "bot_prompt" -> p.bot_prompt.fold(Null)(fromString)
       )
+    }
+
+  implicit val cs =
+    new ClientAuthenticationSerializer[LineClientAuthenticationRequest] {
+      override def serialize(
+          clientConfig: ClientConfig): LineClientAuthenticationRequest =
+        LineClientAuthenticationRequest(
+          response_type = "code",
+          client_id = clientConfig.clientId,
+          redirect_uri = clientConfig.redirectUri.toString(),
+          state = java.util.UUID.randomUUID.toString.replaceAll("-", ""),
+          scope = Some("openid email"),
+          nonce = None,
+          prompt = None,
+          max_age = None,
+          ui_locales = None,
+          bot_prompt = None
+        )
     }
 }

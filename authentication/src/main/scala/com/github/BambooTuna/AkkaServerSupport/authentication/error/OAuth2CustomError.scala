@@ -1,4 +1,4 @@
-package com.github.BambooTuna.AkkaServerSupport.authentication.oauth2
+package com.github.BambooTuna.AkkaServerSupport.authentication.error
 
 import akka.http.scaladsl.server.Rejection
 
@@ -6,7 +6,8 @@ sealed trait OAuth2CustomError extends Rejection
 case object ParseParameterFailedError extends OAuth2CustomError
 
 sealed trait AccessTokenAcquisitionUseCaseError extends OAuth2CustomError
-case object AccessTokenAcquisitionResponseFailedError extends AccessTokenAcquisitionUseCaseError
+case object AccessTokenAcquisitionResponseFailedError
+    extends AccessTokenAcquisitionUseCaseError
 case object CSRFTokenForbiddenError extends AccessTokenAcquisitionUseCaseError
 
 sealed trait LinkedAuthenticationUseCaseError extends OAuth2CustomError
@@ -15,5 +16,7 @@ case object CooperationFailureError extends LinkedAuthenticationUseCaseError
 case object AccountNotFoundError extends LinkedAuthenticationUseCaseError
 
 sealed trait AccessTokenAcquisitionResponseParserError extends OAuth2CustomError
-case object ParseToRegisterCommandError extends AccessTokenAcquisitionResponseParserError
-case object ParseToSignInCommandError extends AccessTokenAcquisitionResponseParserError
+case object ParseToRegisterCommandError
+    extends AccessTokenAcquisitionResponseParserError
+case object ParseToSignInCommandError
+    extends AccessTokenAcquisitionResponseParserError

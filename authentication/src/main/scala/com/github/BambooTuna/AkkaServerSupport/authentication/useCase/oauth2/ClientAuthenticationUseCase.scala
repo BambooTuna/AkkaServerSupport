@@ -2,19 +2,27 @@ package com.github.BambooTuna.AkkaServerSupport.authentication.useCase.oauth2
 
 import akka.http.scaladsl.model.Uri
 import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.serializer.ClientAuthenticationSerializer
-import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.{ClientAuthenticationRequest, ClientConfig}
+import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.{
+  ClientAuthenticationRequest,
+  ClientConfig
+}
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.oauth2.ClientAuthenticationUseCase.ClientAuthenticationResult
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
+import io.circe._
 import io.circe.syntax._
-import io.circe.generic.auto._
 import monix.eval.Task
 
-class ClientAuthenticationUseCase[I <: ClientAuthenticationRequest](clientConfig: ClientConfig, strategy: StorageStrategy[String, String])(implicit cs: ClientAuthenticationSerializer[I]) {
+class ClientAuthenticationUseCase[I <: ClientAuthenticationRequest](
+    clientConfig: ClientConfig,
+    strategy: StorageStrategy[String, String])(
+    implicit cs: ClientAuthenticationSerializer[I],
+    e: Encoder[I]) {
 
   def execute: Task[ClientAuthenticationResult] = {
     val request = cs.serialize(clientConfig)
     val uri = issueLink(request)
-    cacheRequestState(request).map(_ => ClientAuthenticationResult(uri.toString()))
+    cacheRequestState(request).map(_ =>
+      ClientAuthenticationResult(uri.toString()))
   }
 
   private def cacheRequestState(request: I): Task[Option[Unit]] = {

@@ -1,6 +1,10 @@
 package com.github.BambooTuna.AkkaServerSupport.cooperation.line
 
-import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.AccessTokenAcquisitionRequest
+import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.{
+  AccessTokenAcquisitionRequest,
+  ClientConfig
+}
+import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.serializer.AccessTokenAcquisitionSerializer
 import io.circe._
 import io.circe.Json._
 
@@ -21,5 +25,18 @@ object LineAccessTokenAcquisitionRequest {
         "client_id" -> fromString(p.client_id),
         "client_secret" -> fromString(p.client_secret),
       )
+    }
+
+  implicit val as =
+    new AccessTokenAcquisitionSerializer[LineAccessTokenAcquisitionRequest] {
+      override def serialize(clientConfig: ClientConfig,
+                             code: String): LineAccessTokenAcquisitionRequest =
+        LineAccessTokenAcquisitionRequest(
+          grant_type = "authorization_code",
+          code = code,
+          redirect_uri = clientConfig.redirectUri.toString(),
+          client_id = clientConfig.clientId,
+          client_secret = clientConfig.clientSecret
+        )
     }
 }

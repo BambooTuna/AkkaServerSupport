@@ -6,10 +6,9 @@ import akka.stream.ActorMaterializer
 import cats.effect.{Blocker, Resource}
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
   ConfigSessionSettings,
-  InMemoryStorageStrategy,
   JWTSessionSettings
 }
-import com.github.BambooTuna.AkkaServerSupport.core.domain.ServerConfig
+import com.github.BambooTuna.AkkaServerSupport.core.model.ServerConfig
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
 import com.github.BambooTuna.AkkaServerSupport.sample.session.RedisStorageStrategy
 import doobie.hikari.HikariTransactor

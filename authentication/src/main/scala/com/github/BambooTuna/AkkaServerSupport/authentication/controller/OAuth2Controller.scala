@@ -6,39 +6,72 @@ import akka.http.scaladsl.server.{Directive, Route}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
 import cats.data.EitherT
+import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
+  OAuth2CustomError,
+  ParseParameterFailedError
+}
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCredentials
-import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.serializer.{AccessTokenAcquisitionResponseParser, AccessTokenAcquisitionSerializer, ClientAuthenticationSerializer}
-import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.{AccessTokenAcquisitionRequest, AccessTokenAcquisitionResponse, ClientAuthenticationRequest, ClientAuthenticationResponse, ClientConfig, LinkedAuthenticationUseCaseError, OAuth2CustomError, ParseParameterFailedError}
+import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.serializer.{
+  AccessTokenAcquisitionResponseParser,
+  AccessTokenAcquisitionSerializer,
+  ClientAuthenticationSerializer
+}
+import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.{
+  AccessTokenAcquisitionRequest,
+  AccessTokenAcquisitionResponse,
+  ClientAuthenticationRequest,
+  ClientAuthenticationResponse,
+  ClientConfig
+}
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.SessionToken
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.LinkedAuthenticationUseCase
-import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.oauth2.{AccessTokenAcquisitionUseCase, ClientAuthenticationUseCase}
-import com.github.BambooTuna.AkkaServerSupport.core.session.{Session, StorageStrategy}
+import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.oauth2.{
+  AccessTokenAcquisitionUseCase,
+  ClientAuthenticationUseCase
+}
+import com.github.BambooTuna.AkkaServerSupport.core.session.{
+  Session,
+  StorageStrategy
+}
 import monix.execution.Scheduler
-
 import io.circe.syntax._
 import io.circe.generic.auto._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.{Decoder, Encoder}
 import monix.eval.Task
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
-abstract class OAuth2Controller[CI <: ClientAuthenticationRequest, AI <: AccessTokenAcquisitionRequest, AO <: AccessTokenAcquisitionResponse](clientConfig: ClientConfig, strategy: StorageStrategy[String, String])(implicit system: ActorSystem, mat: Materializer, executor: ExecutionContext, session: Session[String, SessionToken], cs: ClientAuthenticationSerializer[CI], as: AccessTokenAcquisitionSerializer[AI], ap: AccessTokenAcquisitionResponseParser[AO]) {
+abstract class OAuth2Controller[CI <: ClientAuthenticationRequest,
+                                AI <: AccessTokenAcquisitionRequest,
+                                AO <: AccessTokenAcquisitionResponse](
+    clientConfig: ClientConfig,
+    strategy: StorageStrategy[String, String])(
+    implicit system: ActorSystem,
+    mat: Materializer,
+    executor: ExecutionContext,
+    session: Session[String, SessionToken],
+    cs: ClientAuthenticationSerializer[CI],
+    as: AccessTokenAcquisitionSerializer[AI],
+    ap: AccessTokenAcquisitionResponseParser[AO],
+    eCI: Encoder[CI],
+    eAI: Encoder[AI],
+    dAO: Decoder[AO]) {
 
   type QueryP[Q] = Directive[Q] => Route
 
   val linkedAuthenticationUseCase: LinkedAuthenticationUseCase
-  val dbSession: linkedAuthenticationUseCase.M[LinkedUserCredentials]
+  val dbSession: linkedAuthenticationUseCase.linkedUserCredentialsDao.DBSession
 
   private val clientAuthenticationUseCase: ClientAuthenticationUseCase[CI] =
     new ClientAuthenticationUseCase(clientConfig, strategy)
-  private val accessTokenAcquisitionUseCase: AccessTokenAcquisitionUseCase[AI, AO] =
+  private val accessTokenAcquisitionUseCase
+    : AccessTokenAcquisitionUseCase[AI, AO] =
     new AccessTokenAcquisitionUseCase(clientConfig, strategy)
 
   def fetchCooperationLink(implicit s: Scheduler): QueryP[Unit] = _ {
-    val f =
-      clientAuthenticationUseCase
-        .execute
-        .runToFuture
+    val f: Future[ClientAuthenticationUseCase.ClientAuthenticationResult] =
+      clientAuthenticationUseCase.execute.runToFuture
     onSuccess(f) { uri =>
       complete(StatusCodes.OK -> uri)
     }
@@ -51,7 +84,9 @@ abstract class OAuth2Controller[CI <: ClientAuthenticationRequest, AI <: AccessT
           val f =
             (for {
               ao <- accessTokenAcquisitionUseCase.execute(value)
-              command <- EitherT { Task.pure(ap.parseToSignInCommand(ao)) }
+              command <- EitherT {
+                Task.pure(ap.parseToSignInCommand(ao, clientConfig))
+              }
               r <- EitherT[Task, OAuth2CustomError, LinkedUserCredentials] {
                 linkedAuthenticationUseCase
                   .signIn(command)
@@ -60,7 +95,8 @@ abstract class OAuth2Controller[CI <: ClientAuthenticationRequest, AI <: AccessT
             } yield r).value.runToFuture
           onSuccess(f) {
             case Right(value) =>
-              session.setSession(SessionToken(value.id, Some(value.serviceName))) {
+              session.setSession(
+                SessionToken(value.id, Some(value.serviceName))) {
                 complete(StatusCodes.OK)
               }
             case Left(value) => reject(value)

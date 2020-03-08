@@ -15,22 +15,21 @@ class RedisStorageStrategy(dbSession: RedisClient)(
     settings: JWTSessionSettings)
     extends StorageStrategy[String, String] {
 
-  override def store(key: String, value: String): Future[Unit] =
+  override def store(key: String, value: String): Future[Option[Unit]] =
     dbSession
       .set[String](key,
                    value,
                    exSeconds = Some(settings.expirationDate.toSeconds))
-      .filter(identity)
-      .map(_ => ())
+      .map(a => if (a) None else Some())
 
   override def find(key: String): Future[Option[String]] =
     dbSession
       .get[String](key)
 
-  override def remove(key: String): Future[Unit] =
+  override def remove(key: String): Future[Option[Unit]] =
     dbSession
       .del(key)
-      .map(_ => ())
+      .map(a => if (a > 0) Some() else None)
 }
 
 object RedisStorageStrategy {
@@ -41,9 +40,8 @@ object RedisStorageStrategy {
       RedisClient(
         host = config.getString(s"redis.${name}.host"),
         port = config.getInt(s"redis.${name}.port"),
-        password =
-          Some(config.getString(s"redis.${name}.password"))
-            .filter(_.nonEmpty),
+        password = Some(config.getString(s"redis.${name}.password"))
+          .filter(_.nonEmpty),
         db = Some(config.getInt(s"redis.${name}.db")),
         connectTimeout = Some(
           config

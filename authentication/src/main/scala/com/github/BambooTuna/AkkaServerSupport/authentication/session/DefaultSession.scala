@@ -2,19 +2,29 @@ package com.github.BambooTuna.AkkaServerSupport.authentication.session
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.RouteDirectives.reject
-import akka.http.scaladsl.server.{AuthorizationFailedRejection, Directive0, Directive1, MissingHeaderRejection}
+import akka.http.scaladsl.server.{
+  AuthorizationFailedRejection,
+  Directive0,
+  Directive1,
+  MissingHeaderRejection
+}
 import cats._
 import data._
 import implicits._
 import cats.data.OptionT
-import com.github.BambooTuna.AkkaServerSupport.core.session.{Session, SessionSerializer, StorageStrategy, StringSessionSerializer}
+import com.github.BambooTuna.AkkaServerSupport.core.session.{
+  Session,
+  SessionSerializer,
+  StorageStrategy,
+  StringSessionSerializer
+}
 import pdi.jwt.{Jwt, JwtClaim}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-abstract class DefaultSession[V](val settings: JWTSessionSettings,
-                                 val strategy: StorageStrategy[String, String])(
+class DefaultSession[V](val settings: JWTSessionSettings,
+                        val strategy: StorageStrategy[String, String])(
     implicit ss: SessionSerializer[V, String],
     executor: ExecutionContext)
     extends Session[String, V] {
@@ -54,14 +64,14 @@ abstract class DefaultSession[V](val settings: JWTSessionSettings,
               key <- OptionT[Future, JwtClaim](
                 Future.successful(jwtDecode(value).toOption))
               jwtId <- OptionT[Future, String](Future.successful(key.jwtId))
-              v <- OptionT[Future, String](strategy.find(jwtId)).filter(
-                _ == key.content)
+              v <- OptionT[Future, String](strategy.find(jwtId))
+                .filter(_ == key.content)
               content <- OptionT[Future, V](
                 Future.successful(ss.deserialize(v).toOption))
             } yield content).value
           onSuccess(f).flatMap {
             case Some(value) => provide(value)
-            case None  => reject(AuthorizationFailedRejection)
+            case None        => reject(AuthorizationFailedRejection)
           }
         case None => reject(MissingHeaderRejection(settings.authHeaderName))
       }
@@ -79,13 +89,13 @@ abstract class DefaultSession[V](val settings: JWTSessionSettings,
         key <- OptionT[Future, JwtClaim](
           Future.successful(jwtDecode(value).toOption))
         jwtId <- OptionT[Future, String](Future.successful(key.jwtId))
-        _ <- OptionT[Future, String](strategy.find(jwtId)).filter(
-          _ == key.content)
+        _ <- OptionT[Future, String](strategy.find(jwtId))
+          .filter(_ == key.content)
         r <- OptionT[Future, Unit](strategy.remove(jwtId).map(_ => Some()))
       } yield r).value
     onSuccess(f).flatMap {
       case Some(_) => pass
-      case None  => reject(AuthorizationFailedRejection)
+      case None    => reject(AuthorizationFailedRejection)
     }
   }
 
