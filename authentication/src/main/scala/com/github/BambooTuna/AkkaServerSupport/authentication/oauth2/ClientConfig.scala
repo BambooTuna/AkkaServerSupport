@@ -1,4 +1,4 @@
-package com.github.BambooTuna.AkkaServerSupport.cooperation.model
+package com.github.BambooTuna.AkkaServerSupport.authentication.oauth2
 
 import akka.http.scaladsl.model.Uri
 import com.typesafe.config.Config

@@ -2,23 +2,19 @@ package com.github.BambooTuna.AkkaServerSupport.authentication.dao
 
 import cats.data.{Kleisli, OptionT}
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCredentials
+import monix.eval.Task
 
 trait LinkedUserCredentialsDao {
-  type IO[_]
   type DBSession
 
-  type M[O] = Kleisli[IO, DBSession, O]
-  type Record <: LinkedUserCredentials
+  type M[O] = Kleisli[Task, DBSession, O]
 
-  type Id
-  type ServiceId
+  def insert(record: LinkedUserCredentials): M[LinkedUserCredentials]
 
-  def insert(record: Record): M[Record]
+  def resolveById(id: String): OptionT[M, LinkedUserCredentials]
 
-  def resolveById(id: Id): OptionT[M, Record]
+  def resolveByServiceId(serviceId: String): OptionT[M, LinkedUserCredentials]
 
-  def resolveByServiceId(serviceId: ServiceId): OptionT[M, Record]
-
-  def delete(id: Id): OptionT[M, Id]
+  def delete(id: String): OptionT[M, Unit]
 
 }
