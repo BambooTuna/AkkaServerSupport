@@ -11,7 +11,7 @@ import com.github.BambooTuna.AkkaServerSupport.core.session.{Session, SessionSer
 import pdi.jwt.{Jwt, JwtClaim}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 abstract class DefaultSession[V](val settings: JWTSessionSettings,
                                  val strategy: StorageStrategy[String, String])(
