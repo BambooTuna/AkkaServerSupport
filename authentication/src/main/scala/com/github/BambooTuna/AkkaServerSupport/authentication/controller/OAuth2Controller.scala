@@ -87,12 +87,20 @@ abstract class OAuth2Controller[CI <: ClientAuthenticationRequest,
               command <- EitherT {
                 Task.pure(ap.parseToSignInCommand(ao, clientConfig))
               }
-              r <- EitherT[Task, OAuth2CustomError, LinkedUserCredentials] {
-                linkedAuthenticationUseCase
-                  .signIn(command)
-                  .run(dbSession)
-              }
-            } yield r).value.runToFuture
+              result <- for {
+                registerCommand <- EitherT {
+                  Task.pure(ap.parseToRegisterCommand(ao, clientConfig))
+                }
+                r <- EitherT[Task, OAuth2CustomError, LinkedUserCredentials] {
+                  linkedAuthenticationUseCase
+                    .signIn(command)
+                    .leftFlatMap(_ =>
+                      linkedAuthenticationUseCase.register(registerCommand))
+                    .value
+                    .run(dbSession)
+                }
+              } yield r
+            } yield result).value.runToFuture
           onSuccess(f) {
             case Right(value) =>
               session.setSession(
