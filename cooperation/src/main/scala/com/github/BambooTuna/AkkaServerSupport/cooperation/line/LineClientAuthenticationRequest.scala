@@ -1,6 +1,6 @@
 package com.github.BambooTuna.AkkaServerSupport.cooperation.line
 
-import com.github.BambooTuna.AkkaServerSupport.cooperation.model.ClientAuthenticationRequest
+import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.ClientAuthenticationRequest
 import io.circe.Encoder
 import io.circe.Json._
 
