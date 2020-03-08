@@ -3,6 +3,7 @@ package com.github.BambooTuna.AkkaServerSupport.sample
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpMethods.{DELETE, GET, POST}
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import cats.effect.Resource
 import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.ClientConfig
@@ -11,7 +12,11 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
   JWTSessionSettings,
   SessionToken
 }
-import com.github.BambooTuna.AkkaServerSupport.core.router.{Router, route}
+import com.github.BambooTuna.AkkaServerSupport.core.router.{
+  RouteController,
+  Router,
+  route
+}
 import com.github.BambooTuna.AkkaServerSupport.core.session.{
   Session,
   StorageStrategy
@@ -22,31 +27,41 @@ import com.github.BambooTuna.AkkaServerSupport.sample.controller.{
 }
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
-import monix.execution.Scheduler.Implicits.global
+import monix.execution.Scheduler
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.ExecutionContext
 
-class Routes(sessionSettings: JWTSessionSettings,
-             sessionStorage: StorageStrategy[String, String],
-             oauthStorage: StorageStrategy[String, String],
-             dbSession: Resource[Task, HikariTransactor[Task]])(
+class RouteControllerImpl(sessionSettings: JWTSessionSettings,
+                          sessionStorage: StorageStrategy[String, String],
+                          oauthStorage: StorageStrategy[String, String],
+                          dbSession: Resource[Task, HikariTransactor[Task]])(
     implicit system: ActorSystem,
     mat: Materializer,
-    executor: ExecutionContext) {
+    executor: ExecutionContext)
+    extends RouteController {
 
-  implicit val session: Session[String, SessionToken] =
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
+
+  override def toRoutes: Route =
+    handleExceptions(defaultExceptionHandler(logger)) {
+      handleRejections(defaultRejectionHandler) {
+        createRoute(monix.execution.Scheduler.Implicits.global).create
+      }
+    }
+
+  private implicit val session: Session[String, SessionToken] =
     new DefaultSession[SessionToken](sessionSettings, sessionStorage)
 
-  val authenticationController =
+  private val authenticationController =
     new AuthenticationControllerImpl(dbSession)
 
-  val clientConfig: ClientConfig =
+  private val clientConfig: ClientConfig =
     ClientConfig.fromConfig("line", system.settings.config)
-
-  val lineOAuth2Controller =
+  private val lineOAuth2Controller =
     new LineOAuth2ControllerImpl(clientConfig, oauthStorage, dbSession)
 
-  def createRoute: Router = {
+  def createRoute(implicit s: Scheduler): Router = {
     Router(
       route(POST, "signup", authenticationController.signUpRoute),
       route(POST, "signin", authenticationController.signInRoute),

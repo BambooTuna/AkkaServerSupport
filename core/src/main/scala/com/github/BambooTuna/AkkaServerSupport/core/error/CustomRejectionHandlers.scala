@@ -2,17 +2,18 @@ package com.github.BambooTuna.AkkaServerSupport.core.error
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.complete
-import akka.http.scaladsl.server.{Rejection, RejectionHandler, Route}
+import akka.http.scaladsl.server.{Rejection, RejectionHandler}
 
 trait CustomRejectionHandlers {
 
-  final protected val default: RejectionHandler = RejectionHandler
-    .newBuilder()
-    .handle {
-      case e: Rejection =>
-        complete(StatusCodes.BadRequest, e.getClass.getName)
-    }
-    .result()
+  final protected val defaultRejectionHandler: RejectionHandler =
+    RejectionHandler
+      .newBuilder()
+      .handle {
+        case e: Rejection =>
+          complete(StatusCodes.BadRequest, e.getClass.getName)
+      }
+      .result()
 
   /*
     Rejection Sample
@@ -24,6 +25,6 @@ trait CustomRejectionHandlers {
     import io.circe.generic.auto._
     case class ErrorResponseJson(error_code: String, message: String)
     complete(StatusCodes.BadRequest -> ErrorResponseJson("", ""))
-  */
+ */
 
 }

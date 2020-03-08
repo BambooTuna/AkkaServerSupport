@@ -42,7 +42,10 @@ object Main extends App {
   val redisOAuth: StorageStrategy[String, String] =
     RedisStorageStrategy.fromConfig(system.settings.config, "oauth2")
 
-  val r = new Routes(sessionSettings, redisSession, redisOAuth, dbSession)
+  val r = new RouteControllerImpl(sessionSettings,
+                                  redisSession,
+                                  redisOAuth,
+                                  dbSession)
 
   val serverConfig: ServerConfig =
     ServerConfig(
@@ -51,9 +54,7 @@ object Main extends App {
     )
 
   val bindingFuture =
-    Http().bindAndHandle(r.createRoute.create,
-                         serverConfig.host,
-                         serverConfig.port)
+    Http().bindAndHandle(r.toRoutes, serverConfig.host, serverConfig.port)
 
   sys.addShutdownHook {
     bindingFuture
