@@ -13,13 +13,13 @@ class InMemoryStorageStrategy(implicit val executor: ExecutionContext)
   var storage: scala.collection.mutable.HashMap[String, String] =
     scala.collection.mutable.HashMap.empty
 
-  def store(key: String, value: String): Future[Unit] =
-    Future { storage.put(key, value) }
+  def store(key: String, value: String): Future[Option[Unit]] =
+    Future { storage.put(key, value).map(_ => ()) }
 
   override def find(key: String): Future[Option[String]] =
     Future { storage.get(key) }
 
-  override def remove(key: String): Future[Unit] =
-    Future { storage.remove(key).get }
+  override def remove(key: String): Future[Option[Unit]] =
+    Future { storage.remove(key).map(_ => ()) }
 
 }

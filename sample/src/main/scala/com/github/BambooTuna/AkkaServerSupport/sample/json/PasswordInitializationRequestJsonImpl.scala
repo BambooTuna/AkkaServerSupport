@@ -4,6 +4,6 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.json.PasswordIniti
 import com.github.BambooTuna.AkkaServerSupport.sample.model.UserCredentialsImpl
 
 case class PasswordInitializationRequestJsonImpl(mail: String)
-    extends PasswordInitializationRequestJson[UserCredentialsImpl] {
+    extends PasswordInitializationRequestJson {
   override val signInId: String = mail
 }

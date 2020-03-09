@@ -1,62 +1,42 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.useCase
 
-import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import cats.Monad
+import cats.data.EitherT
 import com.github.BambooTuna.AkkaServerSupport.authentication.command.{
-  LinkedSignInRequestCommand,
-  LinkedSignUpRequestCommand
+  RegisterLinkedUserCredentialsCommand,
+  SignInWithLinkageCommand
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.LinkedUserCredentialsDao
-import com.github.BambooTuna.AkkaServerSupport.authentication.router.error.CustomError
-import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.LinkedAuthenticationUseCase.{
-  CooperationFailureError,
+import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
+  AccountNotFoundError,
   LinkedAuthenticationUseCaseError,
   RegisteredError
 }
+import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCredentials
+import com.github.BambooTuna.AkkaServerSupport.core.serializer.JsonRecodeSerializer
 
-trait LinkedAuthenticationUseCase {
+abstract class LinkedAuthenticationUseCase(
+    implicit rs: JsonRecodeSerializer[RegisterLinkedUserCredentialsCommand,
+                                      LinkedUserCredentials]) {
 
   val linkedUserCredentialsDao: LinkedUserCredentialsDao
-
-  type IO[O] = linkedUserCredentialsDao.IO[O]
   type M[O] = linkedUserCredentialsDao.M[O]
 
-  type Id = linkedUserCredentialsDao.Id
-  type ServiceId = linkedUserCredentialsDao.ServiceId
-
-  type Record = linkedUserCredentialsDao.Record
-
-  type LinkedSignUpRequest <: LinkedSignUpRequestCommand[Record]
-  type LinkedSignInRequest <: LinkedSignInRequestCommand[Record]
-
-  def ioErrorHandling[T, U >: T](io: IO[T], f: Throwable => U): IO[U]
-
-  def signUp(command: LinkedSignUpRequest)(implicit F: Monad[IO])
-    : M[Either[LinkedAuthenticationUseCaseError, Record]] = {
-    linkedUserCredentialsDao
-      .insert(command.createLinkedUserCredentials)
-      .map(Right(_))
-      .mapF(io => ioErrorHandling(io, _ => Left(RegisteredError)))
+  def register(command: RegisterLinkedUserCredentialsCommand)
+    : EitherT[M, LinkedAuthenticationUseCaseError, LinkedUserCredentials] = {
+    EitherT[M, LinkedAuthenticationUseCaseError, LinkedUserCredentials] {
+      linkedUserCredentialsDao
+        .insert(rs.toRecode(command))
+        .map(Right(_))
+        .mapF(_.onErrorHandle(_ => Left(RegisteredError)))
+    }
   }
 
-  def signIn(command: LinkedSignInRequest)(implicit F: Monad[M])
-    : M[Either[LinkedAuthenticationUseCaseError, Record]] =
+  def signIn(command: SignInWithLinkageCommand)(implicit F: Monad[M])
+    : EitherT[M, LinkedAuthenticationUseCaseError, LinkedUserCredentials] =
     linkedUserCredentialsDao
-      .resolveByServiceId(command.serviceId.asInstanceOf[ServiceId])
+      .resolveByServiceId(command.serviceId)
       .filter(_.serviceName == command.serviceName)
-      .toRight[LinkedAuthenticationUseCaseError](CooperationFailureError)
-      .value
+      .toRight[LinkedAuthenticationUseCaseError](AccountNotFoundError)
 
-}
-
-object LinkedAuthenticationUseCase {
-  sealed trait LinkedAuthenticationUseCaseError extends CustomError
-  case object RegisteredError extends LinkedAuthenticationUseCaseError {
-    override val statusCode: StatusCode = StatusCodes.TemporaryRedirect
-    override val message: Option[String] = Some("連携済")
-  }
-  case object CooperationFailureError extends LinkedAuthenticationUseCaseError {
-    override val statusCode: StatusCode = StatusCodes.BadRequest
-    override val message: Option[String] = Some("CooperationFailureError")
-  }
 }
