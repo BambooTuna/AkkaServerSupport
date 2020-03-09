@@ -34,7 +34,13 @@
 `$ sbt sample/docker:publishLocal`
 
 2. サーバー起動
-`$ docker-compose up --build`
+`docker-compose.yml`の環境変数に値をセットする
+- `LINE_CLIENT_ID`
+- `LINE_CLIENT_SECRET`
+
+```bash
+$ docker-compose up --build
+```
 
 ### Redis操作
 ```bash
@@ -77,11 +83,15 @@ $ curl -X DELETE localhost:8080/logout -H "Authorization: $SESSION_TOKEN"
 ```
 
 ### SNS連携
-編集中...
+- Line連携のリンク発行
 ```bash
 $ curl -X POST http://localhost:8080/oauth2/signin/line
-$ curl -X GET http://localhost:8080/oauth2/signin/line
+{"redirectUri":"~~~"}
 ```
+
+- 連携承認後
+`http://localhost:8080/oauth2/signin/line`にリダイレクト
+HeaderName=`Set-Authorization`にセッショントークンがセットされる
 
 ## データーベース構成
 ...
