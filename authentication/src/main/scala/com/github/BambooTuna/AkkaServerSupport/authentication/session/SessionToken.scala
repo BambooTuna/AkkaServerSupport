@@ -1,6 +1,9 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.session
 
-import com.github.BambooTuna.AkkaServerSupport.core.session.{SessionSerializer, StringSessionSerializer}
+import com.github.BambooTuna.AkkaServerSupport.core.session.{
+  SessionSerializer,
+  StringSessionSerializer
+}
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.auto._
