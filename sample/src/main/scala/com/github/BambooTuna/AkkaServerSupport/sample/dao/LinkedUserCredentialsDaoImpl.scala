@@ -3,36 +3,31 @@ package com.github.BambooTuna.AkkaServerSupport.sample.dao
 import cats.data.{Kleisli, OptionT}
 import cats.effect.Resource
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.LinkedUserCredentialsDao
-import com.github.BambooTuna.AkkaServerSupport.sample.model.LinkedUserCredentialsImpl
+import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCredentials
 import doobie.hikari.HikariTransactor
 import doobie.quill.DoobieContext
 import io.getquill.SnakeCase
 import monix.eval.Task
 
 class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
-  override type IO[O] = Task[O]
-  override type DBSession = Resource[IO, HikariTransactor[IO]]
-  override type Record = LinkedUserCredentialsImpl
-  override type Id = Record#Id
-  override type ServiceId = Record#ServiceId
+  override type DBSession = Resource[Task, HikariTransactor[Task]]
 
   val dc: DoobieContext.MySQL[SnakeCase] = new DoobieContext.MySQL(SnakeCase)
   import dc._
   import doobie.implicits._
 
   implicit lazy val daoSchemaMeta =
-    schemaMeta[Record](
+    schemaMeta[LinkedUserCredentials](
       "linked_user_credentials",
       _.id -> "id",
       _.serviceId -> "service_id",
       _.serviceName -> "service_name",
     )
 
-  override def insert(
-      record: LinkedUserCredentialsImpl): M[LinkedUserCredentialsImpl] =
+  override def insert(record: LinkedUserCredentials): M[LinkedUserCredentials] =
     Kleisli { implicit ctx: DBSession =>
       val q = quote {
-        query[Record]
+        query[LinkedUserCredentials]
           .insert(lift(record))
       }
       ctx
@@ -40,11 +35,11 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
         .map(a => if (a > 0) record else throw new RuntimeException)
     }
 
-  override def resolveById(id: String): OptionT[M, LinkedUserCredentialsImpl] =
-    OptionT[M, Record] {
+  override def resolveById(id: String): OptionT[M, LinkedUserCredentials] =
+    OptionT[M, LinkedUserCredentials] {
       Kleisli { implicit ctx: DBSession =>
         val q = quote {
-          query[Record]
+          query[LinkedUserCredentials]
             .filter(_.id == lift(id))
         }
         ctx
@@ -54,11 +49,11 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
     }
 
   override def resolveByServiceId(
-      serviceId: String): OptionT[M, LinkedUserCredentialsImpl] =
-    OptionT[M, Record] {
+      serviceId: String): OptionT[M, LinkedUserCredentials] =
+    OptionT[M, LinkedUserCredentials] {
       Kleisli { implicit ctx: DBSession =>
         val q = quote {
-          query[Record]
+          query[LinkedUserCredentials]
             .filter(_.serviceId == lift(serviceId))
         }
         ctx
@@ -67,17 +62,17 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
       }
     }
 
-  override def delete(serviceId: String): OptionT[M, String] =
-    OptionT[M, Id] {
+  override def delete(serviceId: String): OptionT[M, Unit] =
+    OptionT[M, Unit] {
       Kleisli { implicit ctx: DBSession =>
         val q = quote {
-          query[Record]
+          query[LinkedUserCredentials]
             .filter(_.serviceId == lift(serviceId))
             .delete
         }
         ctx
           .use(x => run(q).transact(x))
-          .map(a => if (a > 0) Some(serviceId) else None)
+          .map(a => if (a > 0) Some() else None)
       }
     }
 

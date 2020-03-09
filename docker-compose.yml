@@ -25,6 +25,9 @@ services:
       - REDIS_HOST_OAUTH2=redis
       - MYSQL_HOST=mysql
       - MYSQL_DATABASE=akkaserversupport
+      - LINE_CLIENT_ID=111
+      - LINE_CLIENT_SECRET=111
+      - LINE_REDIRECT_URI=http://localhost:8080/oauth2/signin/line
 
 
     depends_on:

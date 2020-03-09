@@ -6,10 +6,9 @@ import akka.stream.ActorMaterializer
 import cats.effect.{Blocker, Resource}
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
   ConfigSessionSettings,
-  InMemoryStorageStrategy,
   JWTSessionSettings
 }
-import com.github.BambooTuna.AkkaServerSupport.core.domain.ServerConfig
+import com.github.BambooTuna.AkkaServerSupport.core.model.ServerConfig
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
 import com.github.BambooTuna.AkkaServerSupport.sample.session.RedisStorageStrategy
 import doobie.hikari.HikariTransactor
@@ -43,7 +42,10 @@ object Main extends App {
   val redisOAuth: StorageStrategy[String, String] =
     RedisStorageStrategy.fromConfig(system.settings.config, "oauth2")
 
-  val r = new Routes(sessionSettings, redisSession, redisOAuth, dbSession)
+  val r = new RouteControllerImpl(sessionSettings,
+                                  redisSession,
+                                  redisOAuth,
+                                  dbSession)
 
   val serverConfig: ServerConfig =
     ServerConfig(
@@ -52,9 +54,7 @@ object Main extends App {
     )
 
   val bindingFuture =
-    Http().bindAndHandle(r.createRoute.create,
-                         serverConfig.host,
-                         serverConfig.port)
+    Http().bindAndHandle(r.toRoutes, serverConfig.host, serverConfig.port)
 
   sys.addShutdownHook {
     bindingFuture

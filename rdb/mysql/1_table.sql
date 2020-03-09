@@ -14,6 +14,8 @@ CREATE TABLE `linked_user_credentials` (
     `id` VARCHAR(255) NOT NULL,
     `service_id` VARCHAR(255) NOT NULL,
     `service_name` VARCHAR(255) NOT NULL,
+    `mail` VARCHAR(255),
     PRIMARY KEY (`id`),
-    UNIQUE KEY (`service_id`, `service_name`)
+    UNIQUE KEY (`service_id`, `service_name`),
+    UNIQUE KEY (`mail`)
 );

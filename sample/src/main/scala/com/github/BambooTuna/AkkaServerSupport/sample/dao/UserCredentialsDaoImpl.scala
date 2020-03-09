@@ -9,31 +9,26 @@ import doobie.quill.DoobieContext
 import io.getquill.SnakeCase
 import monix.eval.Task
 
-class UserCredentialsDaoImpl extends UserCredentialsDao {
+class UserCredentialsDaoImpl extends UserCredentialsDao[UserCredentialsImpl] {
 
-  override type IO[O] = Task[O]
-  override type DBSession = Resource[IO, HikariTransactor[IO]]
-
-  override type Record = UserCredentialsImpl
-
-  override type Id = Record#SigninId
+  override type DBSession = Resource[Task, HikariTransactor[Task]]
 
   val dc: DoobieContext.MySQL[SnakeCase] = new DoobieContext.MySQL(SnakeCase)
   import dc._
   import doobie.implicits._
 
   implicit lazy val daoSchemaMeta =
-    schemaMeta[Record](
+    schemaMeta[UserCredentialsImpl](
       "user_credentials",
       _.id -> "id",
       _.signinId -> "mail",
       _.signinPass.encryptedPass -> "pass"
     )
 
-  override def insert(record: Record): M[Record] =
+  override def insert(record: UserCredentialsImpl): M[UserCredentialsImpl] =
     Kleisli { implicit ctx: DBSession =>
       val q = quote {
-        query[Record]
+        query[UserCredentialsImpl]
           .insert(lift(record))
       }
       ctx
@@ -41,11 +36,11 @@ class UserCredentialsDaoImpl extends UserCredentialsDao {
         .map(a => if (a > 0) record else throw new RuntimeException)
     }
 
-  override def resolveById(signinId: String): OptionT[M, Record] =
-    OptionT[M, Record] {
+  override def resolveById(signinId: String): OptionT[M, UserCredentialsImpl] =
+    OptionT[M, UserCredentialsImpl] {
       Kleisli { implicit ctx: DBSession =>
         val q = quote {
-          query[Record]
+          query[UserCredentialsImpl]
             .filter(_.signinId == lift(signinId))
         }
         ctx
@@ -54,11 +49,12 @@ class UserCredentialsDaoImpl extends UserCredentialsDao {
       }
     }
 
-  override def update(record: Record): OptionT[M, Record] =
-    OptionT[M, Record] {
+  override def update(
+      record: UserCredentialsImpl): OptionT[M, UserCredentialsImpl] =
+    OptionT[M, UserCredentialsImpl] {
       Kleisli { implicit ctx: DBSession =>
         val q = quote {
-          query[Record]
+          query[UserCredentialsImpl]
             .filter(_.signinId == lift(record.signinId))
             .update(a =>
               (a.signinId -> record.signinId,
@@ -70,17 +66,17 @@ class UserCredentialsDaoImpl extends UserCredentialsDao {
       }
     }
 
-  override def delete(signinId: String): OptionT[M, Id] =
-    OptionT[M, Id] {
+  override def delete(signinId: String): OptionT[M, Unit] =
+    OptionT[M, Unit] {
       Kleisli { implicit ctx: DBSession =>
         val q = quote {
-          query[Record]
+          query[UserCredentialsImpl]
             .filter(_.signinId == lift(signinId))
             .delete
         }
         ctx
           .use(x => run(q).transact(x))
-          .map(a => if (a > 0) Some(signinId) else None)
+          .map(a => if (a > 0) Some() else None)
       }
     }
 
