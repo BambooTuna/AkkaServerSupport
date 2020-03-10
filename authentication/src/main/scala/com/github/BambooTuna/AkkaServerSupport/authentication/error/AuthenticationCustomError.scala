@@ -1,8 +1,8 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.error
 
-import akka.http.scaladsl.server.Rejection
+import akka.http.javadsl.server.CustomRejection
 
-sealed trait AuthenticationCustomError extends Rejection
+sealed trait AuthenticationCustomError extends CustomRejection
 
 sealed trait AuthenticationUseCaseError extends AuthenticationCustomError
 case object SignUpInsertError extends AuthenticationUseCaseError
