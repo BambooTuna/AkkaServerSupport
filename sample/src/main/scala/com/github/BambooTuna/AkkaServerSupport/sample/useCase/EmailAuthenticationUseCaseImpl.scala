@@ -11,16 +11,22 @@ class EmailAuthenticationUseCaseImpl(strategy: StorageStrategy[String, String])
   override val userCredentialsDao: UserCredentialsDaoImpl =
     new UserCredentialsDaoImpl
 
-  override protected def sendActivateCodeEmailTo(mail: String,
-                                                 code: String): Task[Unit] = {
+  override protected def sendActivateCodeTo(mail: String,
+                                            code: String): Task[Unit] = {
     println(s"sendActivateCodeEmailTo: $mail | $code")
     Task.unit
   }
 
-  override protected def sendInitializationCodeEmailTo(
-      mail: String,
-      code: String): Task[Unit] = {
+  override protected def sendInitializationCodeTo(mail: String,
+                                                  code: String): Task[Unit] = {
     println(s"sendInitializationCodeEmailTo: $mail | $code")
+    Task.unit
+  }
+
+  override protected def sendNewPlainPasswordTo(
+      mail: String,
+      newPlainPassword: String): Task[Unit] = {
+    println(s"sendNewPlainPasswordTo: $mail | $newPlainPassword")
     Task.unit
   }
 }

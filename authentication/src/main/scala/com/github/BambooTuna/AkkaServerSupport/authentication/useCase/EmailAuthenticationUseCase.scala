@@ -22,9 +22,10 @@ abstract class EmailAuthenticationUseCase[Record <: UserCredentials](
   protected def generateCode: String =
     java.util.UUID.randomUUID.toString.replaceAll("-", "")
 
-  protected def sendActivateCodeEmailTo(mail: String, code: String): Task[Unit]
-  protected def sendInitializationCodeEmailTo(mail: String,
-                                              code: String): Task[Unit]
+  protected def sendActivateCodeTo(mail: String, code: String): Task[Unit]
+  protected def sendInitializationCodeTo(mail: String, code: String): Task[Unit]
+  protected def sendNewPlainPasswordTo(mail: String,
+                                       newPlainPassword: String): Task[Unit]
 
   protected def findActivateCode(code: String): Task[Option[String]] =
     for {
@@ -36,7 +37,7 @@ abstract class EmailAuthenticationUseCase[Record <: UserCredentials](
     for {
       code <- Task.pure(generateCode)
       _ <- Task.fromFuture(strategy.store(code, userId))
-      _ <- sendActivateCodeEmailTo(mail, code)
+      _ <- sendActivateCodeTo(mail, code)
     } yield ()
   }
 
@@ -63,7 +64,7 @@ abstract class EmailAuthenticationUseCase[Record <: UserCredentials](
         Kleisli.liftF {
           (for {
             _ <- Task.fromFuture(strategy.store(code, recode.id))
-            _ <- sendInitializationCodeEmailTo(mail, code)
+            _ <- sendInitializationCodeTo(mail, code)
           } yield ()).map(_ => Right())
         }
       }
@@ -71,16 +72,25 @@ abstract class EmailAuthenticationUseCase[Record <: UserCredentials](
   }
 
   def initAccountPassword(
-      code: String): M[Either[AuthenticationCustomError, String]] =
+      code: String): M[Either[AuthenticationCustomError, Unit]] =
     (for {
       id <- EitherT[M, AuthenticationCustomError, String] {
         Kleisli.liftF(
           findActivateCode(code).map(_.toRight(InvalidInitializationCodeError)))
       }
-      newPlainPassword = "newPlainPassword"
+      record <- userCredentialsDao
+        .resolveById(id)
+        .toRight[AuthenticationCustomError](AccountNotFoundError)
+      (newRecord, newPlainPassword) = record.initPassword()
       _ <- userCredentialsDao
-        .updatePassword(id, newPlainPassword)
+        .updatePassword(id, newRecord.signinPass.encryptedPass)
         .toRight[AuthenticationCustomError](ActivateAccountError)
-    } yield newPlainPassword).value
+      _ <- EitherT[M, AuthenticationCustomError, Unit] {
+        Kleisli.liftF {
+          sendNewPlainPasswordTo(newRecord.signinId, newPlainPassword).map(_ =>
+            Right())
+        }
+      }
+    } yield ()).value
 
 }

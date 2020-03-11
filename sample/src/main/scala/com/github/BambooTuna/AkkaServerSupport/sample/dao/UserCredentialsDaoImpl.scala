@@ -39,6 +39,19 @@ class UserCredentialsDaoImpl extends UserCredentialsDao[UserCredentialsImpl] {
         .map(a => if (a > 0) record else throw new RuntimeException)
     }
 
+  override def resolveById(id: String): OptionT[M, UserCredentialsImpl] =
+    OptionT[M, UserCredentialsImpl] {
+      Kleisli { implicit ctx =>
+        val q = quote {
+          query[UserCredentialsImpl]
+            .filter(_.id == lift(id))
+        }
+        ctx
+          .use(x => run(q).transact(x))
+          .map(_.headOption)
+      }
+    }
+
   override def resolveBySigninId(
       signinId: String): OptionT[M, UserCredentialsImpl] =
     OptionT[M, UserCredentialsImpl] {
@@ -54,15 +67,13 @@ class UserCredentialsDaoImpl extends UserCredentialsDao[UserCredentialsImpl] {
     }
 
   override def updatePassword(id: String,
-                              newPlainPassword: String): OptionT[M, Unit] =
+                              newEncryptedPassword: String): OptionT[M, Unit] =
     OptionT[M, Unit] {
       Kleisli { implicit ctx =>
-        val newRecode =
-          EncryptedPasswordImpl("").changeEncryptedPass(newPlainPassword)
         val q = quote {
           query[UserCredentialsImpl]
             .filter(_.id == lift(id))
-            .update(_.signinPass.encryptedPass -> lift(newRecode.encryptedPass))
+            .update(_.signinPass.encryptedPass -> lift(newEncryptedPassword))
         }
         ctx
           .use(x => run(q).transact(x))

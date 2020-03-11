@@ -110,7 +110,7 @@ abstract class AuthenticationController[
             .runToFuture
         onSuccess(f) {
           case Right(_) =>
-            complete(StatusCodes.OK, "メールに初期化用のリンクを送りました")
+            complete(StatusCodes.OK)
           case Left(value) => reject(value)
         }
     }
@@ -119,14 +119,14 @@ abstract class AuthenticationController[
   def initAccountPassword(
       dbSession: emailAuthenticationUseCase.userCredentialsDao.DBSession)(
       implicit s: Scheduler): QueryP[Tuple1[String]] = _ { code =>
-    val f: Future[Either[AuthenticationCustomError, String]] =
+    val f: Future[Either[AuthenticationCustomError, Unit]] =
       emailAuthenticationUseCase
         .initAccountPassword(code)
         .run(dbSession)
         .runToFuture
     onSuccess(f) {
-      case Right(value) => complete(StatusCodes.OK, s"新しいパスワード: $value")
-      case Left(value)  => reject(value)
+      case Right(_)    => complete(StatusCodes.OK)
+      case Left(value) => reject(value)
     }
   }
 

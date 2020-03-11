@@ -10,8 +10,8 @@ trait UserCredentials {
 
   def doAuthenticationByPassword(inputPass: Any): Boolean
 
-//  def changePassword(newPlainPassword: SigninPass#ValueType): UserCredentials
-//
-//  def initPassword(): (UserCredentials, SigninPass#ValueType)
+  def changePassword(newPlainPassword: SigninPass#ValueType): UserCredentials
+
+  def initPassword(): (UserCredentials, SigninPass#ValueType)
 
 }

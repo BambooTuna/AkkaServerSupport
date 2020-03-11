@@ -10,9 +10,13 @@ trait UserCredentialsDao[Record <: UserCredentials] {
 
   def insert(record: Record): M[Record]
 
+  def resolveById(id: String): OptionT[M, Record]
+
   def resolveBySigninId(signinId: String): OptionT[M, Record]
 
-  def updatePassword(id: String, newPlainPassword: String): OptionT[M, Unit]
+  def updatePassword(
+      id: String,
+      newEncryptedPassword: Record#SigninPass#ValueType): OptionT[M, Unit]
 
   def activate(id: String, activated: Boolean): OptionT[M, Unit]
 
