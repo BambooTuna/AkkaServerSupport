@@ -7,9 +7,9 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import cats.data.EitherT
 import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
-  AccessTokenAcquisitionResponseFailedError,
-  AccessTokenAcquisitionUseCaseError,
-  CSRFTokenForbiddenError
+  CSRFTokenForbiddenError,
+  OAuth2CustomError,
+  ParseAccessTokenAcquisitionResponseError
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.serializer.AccessTokenAcquisitionSerializer
 import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.{
@@ -36,7 +36,7 @@ class AccessTokenAcquisitionUseCase[I <: AccessTokenAcquisitionRequest,
 
   def execute(res: ClientAuthenticationResponse)(
       implicit i: Encoder[I],
-      o: Decoder[O]): EitherT[Task, AccessTokenAcquisitionUseCaseError, O] = {
+      o: Decoder[O]): EitherT[Task, OAuth2CustomError, O] = {
     implicit val executor: ExecutionContext = system.dispatcher
     val request = as.serialize(clientConfig, res.code)
     for {
@@ -47,7 +47,7 @@ class AccessTokenAcquisitionUseCase[I <: AccessTokenAcquisitionRequest,
 
   private def runHttpRequest(request: I)(
       implicit i: Encoder[I],
-      o: Decoder[O]): EitherT[Task, AccessTokenAcquisitionUseCaseError, O] = {
+      o: Decoder[O]): EitherT[Task, OAuth2CustomError, O] = {
     val httpRequest = accessTokenAcquisitionRequest(request)
     EitherT {
       Task.fromFuture(
@@ -61,14 +61,14 @@ class AccessTokenAcquisitionUseCase[I <: AccessTokenAcquisitionRequest,
                   parser
                     .decode[O](u)
                     .left
-                    .map(_ => AccessTokenAcquisitionResponseFailedError))
+                    .map(_ => ParseAccessTokenAcquisitionResponseError))
           })
       )
     }
   }
 
-  private def checkCacheRequestState(stats: String)
-    : EitherT[Task, AccessTokenAcquisitionUseCaseError, Unit] = {
+  private def checkCacheRequestState(
+      stats: String): EitherT[Task, OAuth2CustomError, Unit] = {
     EitherT {
       Task.fromFuture(
         for {

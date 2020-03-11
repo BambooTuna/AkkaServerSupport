@@ -5,7 +5,7 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.command.{
   SignInWithLinkageCommand
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
-  AccessTokenAcquisitionResponseParserError,
+  OAuth2CustomError,
   ParseToRegisterCommandError,
   ParseToSignInCommandError
 }
@@ -26,7 +26,7 @@ case class LineAccessTokenAcquisitionResponse(
 ) extends AccessTokenAcquisitionResponse
 
 object LineAccessTokenAcquisitionResponse {
-  implicit val a =
+  implicit val ap =
     new AccessTokenAcquisitionResponseParser[LineAccessTokenAcquisitionResponse] {
 
       def decodeIdToken(t: LineAccessTokenAcquisitionResponse,
@@ -42,19 +42,20 @@ object LineAccessTokenAcquisitionResponse {
 
       override def parseToRegisterCommand(t: LineAccessTokenAcquisitionResponse,
                                           clientConfig: ClientConfig)
-        : Either[AccessTokenAcquisitionResponseParserError,
-                 RegisterLinkedUserCredentialsCommand] =
+        : Either[OAuth2CustomError, RegisterLinkedUserCredentialsCommand] =
         decodeIdToken(t, clientConfig)
-          .toRight(ParseToRegisterCommandError)
+          .toRight(
+            ParseToRegisterCommandError(
+              "Oauth2(Line): Decode JWT Token Failed"))
           .map(id =>
             RegisterLinkedUserCredentialsCommand(id, clientConfig.serviceName))
 
       override def parseToSignInCommand(t: LineAccessTokenAcquisitionResponse,
                                         clientConfig: ClientConfig)
-        : Either[AccessTokenAcquisitionResponseParserError,
-                 SignInWithLinkageCommand] =
+        : Either[OAuth2CustomError, SignInWithLinkageCommand] =
         decodeIdToken(t, clientConfig)
-          .toRight(ParseToSignInCommandError)
+          .toRight(
+            ParseToSignInCommandError("Oauth2(Line): Decode JWT Token Failed"))
           .map(id => SignInWithLinkageCommand(id, clientConfig.serviceName))
     }
 }

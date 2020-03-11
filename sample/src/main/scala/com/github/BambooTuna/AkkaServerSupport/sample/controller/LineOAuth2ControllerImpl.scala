@@ -30,7 +30,8 @@ class LineOAuth2ControllerImpl(
     mat: Materializer,
     executor: ExecutionContext,
     session: Session[String, SessionToken])
-    extends OAuth2Controller[LineClientAuthenticationRequest,
+    extends OAuth2Controller[Resource[Task, HikariTransactor[Task]],
+                             LineClientAuthenticationRequest,
                              LineAccessTokenAcquisitionRequest,
                              LineAccessTokenAcquisitionResponse](clientConfig,
                                                                  strategy) {

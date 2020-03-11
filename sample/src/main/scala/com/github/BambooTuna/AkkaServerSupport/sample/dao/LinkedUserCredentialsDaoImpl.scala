@@ -9,8 +9,8 @@ import doobie.quill.DoobieContext
 import io.getquill.SnakeCase
 import monix.eval.Task
 
-class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
-  override type DBSession = Resource[Task, HikariTransactor[Task]]
+class LinkedUserCredentialsDaoImpl
+    extends LinkedUserCredentialsDao[Resource[Task, HikariTransactor[Task]]] {
 
   val dc: DoobieContext.MySQL[SnakeCase] = new DoobieContext.MySQL(SnakeCase)
   import dc._
@@ -25,7 +25,7 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
     )
 
   override def insert(record: LinkedUserCredentials): M[LinkedUserCredentials] =
-    Kleisli { implicit ctx: DBSession =>
+    Kleisli { implicit ctx =>
       val q = quote {
         query[LinkedUserCredentials]
           .insert(lift(record))
@@ -37,7 +37,7 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
 
   override def resolveById(id: String): OptionT[M, LinkedUserCredentials] =
     OptionT[M, LinkedUserCredentials] {
-      Kleisli { implicit ctx: DBSession =>
+      Kleisli { implicit ctx =>
         val q = quote {
           query[LinkedUserCredentials]
             .filter(_.id == lift(id))
@@ -51,7 +51,7 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
   override def resolveByServiceId(
       serviceId: String): OptionT[M, LinkedUserCredentials] =
     OptionT[M, LinkedUserCredentials] {
-      Kleisli { implicit ctx: DBSession =>
+      Kleisli { implicit ctx =>
         val q = quote {
           query[LinkedUserCredentials]
             .filter(_.serviceId == lift(serviceId))
@@ -64,7 +64,7 @@ class LinkedUserCredentialsDaoImpl extends LinkedUserCredentialsDao {
 
   override def delete(serviceId: String): OptionT[M, Unit] =
     OptionT[M, Unit] {
-      Kleisli { implicit ctx: DBSession =>
+      Kleisli { implicit ctx =>
         val q = quote {
           query[LinkedUserCredentials]
             .filter(_.serviceId == lift(serviceId))

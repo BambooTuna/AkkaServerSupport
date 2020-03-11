@@ -1,14 +1,13 @@
-package com.github.BambooTuna.AkkaServerSupport.sample.session
+package com.github.BambooTuna.AkkaServerSupport.sample.dao
 
+import akka.actor.ActorSystem
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.JWTSessionSettings
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
-import com.github.BambooTuna.AkkaServerSupport.sample.Main.system
 import com.typesafe.config.Config
 import redis.RedisClient
 
-import scala.concurrent.{ExecutionContext, Future}
-
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
 class RedisStorageStrategy(dbSession: RedisClient)(
     implicit val executor: ExecutionContext,
@@ -34,8 +33,9 @@ class RedisStorageStrategy(dbSession: RedisClient)(
 
 object RedisStorageStrategy {
   def fromConfig(config: Config, name: String)(
-      implicit executor: ExecutionContext,
+      implicit system: ActorSystem,
       settings: JWTSessionSettings): RedisStorageStrategy = {
+    implicit val executor: ExecutionContext = system.dispatcher
     val redisSession: RedisClient =
       RedisClient(
         host = config.getString(s"redis.${name}.host"),

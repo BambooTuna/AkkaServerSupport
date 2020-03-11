@@ -1,12 +1,16 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.useCase
 
 import cats.Monad
+import cats.data.{EitherT, Kleisli}
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
 import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
-  AuthenticationUseCaseError,
-  CantFoundUserError,
-  SignInIdOrPassWrongError,
-  SignUpInsertError
+  AccountAlreadyExistsError,
+  AccountNotFoundError,
+  ActivateAccountError,
+  AuthenticationCustomError,
+  InvalidActivateCodeError,
+  InvalidInitializationCodeError,
+  SignInForbiddenError
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   PasswordInitializationRequestJson,
@@ -14,42 +18,31 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredentials
 import com.github.BambooTuna.AkkaServerSupport.core.serializer.JsonRecodeSerializer
+import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
+import monix.eval.Task
 
-abstract class AuthenticationUseCase[SignUpRequest,
+abstract class AuthenticationUseCase[DBSession, SignUpRequest,
 SignInRequest <: SignInRequestJson,
 PasswordInitializationRequest <: PasswordInitializationRequestJson,
 Record <: UserCredentials](
     implicit js: JsonRecodeSerializer[SignUpRequest, Record]) {
 
-  val userCredentialsDao: UserCredentialsDao[Record]
+  val userCredentialsDao: UserCredentialsDao[DBSession, Record]
   type M[O] = userCredentialsDao.M[O]
 
   def signUp(
-      json: SignUpRequest): M[Either[AuthenticationUseCaseError, Record]] =
+      json: SignUpRequest): M[Either[AuthenticationCustomError, Record]] =
     userCredentialsDao
       .insert(js.toRecode(json))
       .map(Right(_))
-      .mapF(_.onErrorHandle(_ => Left(SignUpInsertError)))
+      .mapF(_.onErrorHandle(_ => Left(AccountAlreadyExistsError)))
 
   def signIn(json: SignInRequest)(
-      implicit F: Monad[M]): M[Either[AuthenticationUseCaseError, Record]] =
+      implicit F: Monad[M]): M[Either[AuthenticationCustomError, Record]] =
     userCredentialsDao
-      .resolveById(json.signInId)
+      .resolveBySigninId(json.signInId)
       .filter(_.doAuthenticationByPassword(json.signInPass))
-      .toRight[AuthenticationUseCaseError](SignInIdOrPassWrongError)
-      .value
-
-  def passwordInitialization(json: PasswordInitializationRequest)(
-      implicit F: Monad[M])
-    : M[Either[AuthenticationUseCaseError, Record#SigninPass#ValueType]] =
-    (for {
-      u <- userCredentialsDao
-        .resolveById(json.signInId)
-      (newCredentials, newPlainPassword) = u.initPassword()
-      _ <- userCredentialsDao
-        .update(newCredentials.asInstanceOf[Record])
-    } yield newPlainPassword)
-      .toRight[AuthenticationUseCaseError](CantFoundUserError)
+      .toRight[AuthenticationCustomError](SignInForbiddenError)
       .value
 
 }

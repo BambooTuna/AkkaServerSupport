@@ -3,22 +3,34 @@ package com.github.BambooTuna.AkkaServerSupport.authentication.controller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directive, Route}
-import com.github.BambooTuna.AkkaServerSupport.authentication.error.AuthenticationUseCaseError
+import cats.data.{EitherT, OptionT}
+import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
+  AuthenticationCustomError,
+  InvalidActivateCodeError
+}
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   PasswordInitializationRequestJson,
   SignInRequestJson
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredentials
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.SessionToken
-import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.AuthenticationUseCase
-import com.github.BambooTuna.AkkaServerSupport.core.session.Session
+import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.{
+  AuthenticationUseCase,
+  EmailAuthenticationUseCase
+}
+import com.github.BambooTuna.AkkaServerSupport.core.session.{
+  Session,
+  StorageStrategy
+}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.Decoder
+import monix.eval.Task
 import monix.execution.Scheduler
 
 import scala.concurrent.Future
 
 abstract class AuthenticationController[
+    DBSession,
     SignUpRequest,
     SignInRequest <: SignInRequestJson,
     PasswordInitializationRequest <: PasswordInitializationRequestJson,
@@ -31,19 +43,28 @@ abstract class AuthenticationController[
   type QueryP[Q] = Directive[Q] => Route
 
   val authenticationUseCase: AuthenticationUseCase[
+    DBSession,
     SignUpRequest,
     SignInRequest,
     PasswordInitializationRequest,
     Record]
-  val dbSession: authenticationUseCase.userCredentialsDao.DBSession
+  val emailAuthenticationUseCase: EmailAuthenticationUseCase[DBSession, Record]
+
+  val dbSession: DBSession
 
   def signUpRoute(implicit s: Scheduler): QueryP[Unit] = _ {
     entity(as[SignUpRequest]) { json: SignUpRequest =>
-      val f: Future[Either[AuthenticationUseCaseError, Record]] =
-        authenticationUseCase
-          .signUp(json)
-          .run(dbSession)
-          .runToFuture
+      val f: Future[Either[AuthenticationCustomError, Record]] =
+        (for {
+          recode <- EitherT {
+            authenticationUseCase.signUp(json).run(dbSession)
+          }
+          _ <- EitherT[Task, AuthenticationCustomError, Unit] {
+            emailAuthenticationUseCase
+              .issueActivateCode(recode.id, recode.signinId)
+              .map(Right(_))
+          }
+        } yield recode).value.runToFuture
       onSuccess(f) {
         case Right(value) =>
           session.setSession(SessionToken(value.id)) {
@@ -54,9 +75,22 @@ abstract class AuthenticationController[
     }
   }
 
+  def activateAccountRoute(implicit s: Scheduler): QueryP[Tuple1[String]] = _ {
+    code =>
+      val f: Future[Either[AuthenticationCustomError, Unit]] =
+        emailAuthenticationUseCase
+          .activateAccount(code)
+          .run(dbSession)
+          .runToFuture
+      onSuccess(f) {
+        case Right(_)    => complete(StatusCodes.OK)
+        case Left(value) => reject(value)
+      }
+  }
+
   def signInRoute(implicit s: Scheduler): QueryP[Unit] = _ {
     entity(as[SignInRequest]) { json: SignInRequest =>
-      val f: Future[Either[AuthenticationUseCaseError, Record]] =
+      val f: Future[Either[AuthenticationCustomError, Record]] =
         authenticationUseCase
           .signIn(json)
           .run(dbSession)
@@ -71,23 +105,33 @@ abstract class AuthenticationController[
     }
   }
 
-  def passwordInitializationRoute(implicit s: Scheduler): QueryP[Unit] = _ {
+  def tryInitializationRoute(implicit s: Scheduler): QueryP[Unit] = _ {
     entity(as[PasswordInitializationRequest]) {
       json: PasswordInitializationRequest =>
-        val f: Future[Either[AuthenticationUseCaseError,
-                             Record#SigninPass#ValueType]] =
-          authenticationUseCase
-            .passwordInitialization(json)
+        val f: Future[Either[AuthenticationCustomError, Unit]] =
+          emailAuthenticationUseCase
+            .issueInitializationCode(json.signInId)
             .run(dbSession)
             .runToFuture
-        //TODO fの戻り値は新規パスワード、メールに送信などの処理を追加
         onSuccess(f) {
-          case Right(value) =>
-            complete(StatusCodes.OK,
-                     "After signin, please change your password!")
+          case Right(_) =>
+            complete(StatusCodes.OK, "メールに初期化用のリンクを送りました")
           case Left(value) => reject(value)
         }
     }
+  }
+
+  def initAccountPassword(implicit s: Scheduler): QueryP[Tuple1[String]] = _ {
+    code =>
+      val f: Future[Either[AuthenticationCustomError, String]] =
+        emailAuthenticationUseCase
+          .initAccountPassword(code)
+          .run(dbSession)
+          .runToFuture
+      onSuccess(f) {
+        case Right(value) => complete(StatusCodes.OK, s"新しいパスワード: $value")
+        case Left(value)  => reject(value)
+      }
   }
 
   def healthCheck: QueryP[Unit] = _ {

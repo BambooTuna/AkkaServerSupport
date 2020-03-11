@@ -8,35 +8,35 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.command.{
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.LinkedUserCredentialsDao
 import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
-  AccountNotFoundError,
-  LinkedAuthenticationUseCaseError,
-  RegisteredError
+  LinkedAccountAlreadyExistsError,
+  LinkedAccountNotFoundError,
+  OAuth2CustomError
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCredentials
 import com.github.BambooTuna.AkkaServerSupport.core.serializer.JsonRecodeSerializer
 
-abstract class LinkedAuthenticationUseCase(
+abstract class LinkedAuthenticationUseCase[DBSession](
     implicit rs: JsonRecodeSerializer[RegisterLinkedUserCredentialsCommand,
                                       LinkedUserCredentials]) {
 
-  val linkedUserCredentialsDao: LinkedUserCredentialsDao
+  val linkedUserCredentialsDao: LinkedUserCredentialsDao[DBSession]
   type M[O] = linkedUserCredentialsDao.M[O]
 
   def register(command: RegisterLinkedUserCredentialsCommand)
-    : EitherT[M, LinkedAuthenticationUseCaseError, LinkedUserCredentials] = {
-    EitherT[M, LinkedAuthenticationUseCaseError, LinkedUserCredentials] {
+    : EitherT[M, OAuth2CustomError, LinkedUserCredentials] = {
+    EitherT[M, OAuth2CustomError, LinkedUserCredentials] {
       linkedUserCredentialsDao
         .insert(rs.toRecode(command))
         .map(Right(_))
-        .mapF(_.onErrorHandle(_ => Left(RegisteredError)))
+        .mapF(_.onErrorHandle(_ => Left(LinkedAccountAlreadyExistsError)))
     }
   }
 
   def signIn(command: SignInWithLinkageCommand)(implicit F: Monad[M])
-    : EitherT[M, LinkedAuthenticationUseCaseError, LinkedUserCredentials] =
+    : EitherT[M, OAuth2CustomError, LinkedUserCredentials] =
     linkedUserCredentialsDao
       .resolveByServiceId(command.serviceId)
       .filter(_.serviceName == command.serviceName)
-      .toRight[LinkedAuthenticationUseCaseError](AccountNotFoundError)
+      .toRight[OAuth2CustomError](LinkedAccountNotFoundError)
 
 }

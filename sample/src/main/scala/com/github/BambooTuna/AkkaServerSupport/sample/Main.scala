@@ -10,7 +10,7 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.session.{
 }
 import com.github.BambooTuna.AkkaServerSupport.core.model.ServerConfig
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
-import com.github.BambooTuna.AkkaServerSupport.sample.session.RedisStorageStrategy
+import com.github.BambooTuna.AkkaServerSupport.sample.dao.RedisStorageStrategy
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
 
@@ -39,11 +39,15 @@ object Main extends App {
   val redisSession: StorageStrategy[String, String] =
     RedisStorageStrategy.fromConfig(system.settings.config, "session")
 
+  val redisMail: StorageStrategy[String, String] =
+    RedisStorageStrategy.fromConfig(system.settings.config, "mail")
+
   val redisOAuth: StorageStrategy[String, String] =
     RedisStorageStrategy.fromConfig(system.settings.config, "oauth2")
 
   val r = new RouteControllerImpl(sessionSettings,
                                   redisSession,
+                                  redisMail,
                                   redisOAuth,
                                   dbSession)
 
