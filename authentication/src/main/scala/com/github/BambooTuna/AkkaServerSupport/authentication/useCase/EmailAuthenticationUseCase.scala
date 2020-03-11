@@ -33,12 +33,22 @@ abstract class EmailAuthenticationUseCase[Record <: UserCredentials](
       _ <- Task.fromFuture(strategy.remove(code))
     } yield r
 
-  def issueActivateCode(userId: String, mail: String): Task[Unit] = {
-    for {
-      code <- Task.pure(generateCode)
-      _ <- Task.fromFuture(strategy.store(code, userId))
-      _ <- sendActivateCodeTo(mail, code)
-    } yield ()
+  def issueActivateCode(
+      userId: String): M[Either[AuthenticationCustomError, Unit]] = {
+    (for {
+      record <- userCredentialsDao
+        .resolveById(userId)
+        .toRight(AccountNotFoundError)
+      _ <- EitherT[M, AuthenticationCustomError, Unit] {
+        Kleisli.liftF {
+          for {
+            code <- Task.pure(generateCode)
+            _ <- Task.fromFuture(strategy.store(code, userId))
+            _ <- sendActivateCodeTo(record.signinId, code)
+          } yield Right()
+        }
+      }
+    } yield ()).value
   }
 
   def activateAccount(

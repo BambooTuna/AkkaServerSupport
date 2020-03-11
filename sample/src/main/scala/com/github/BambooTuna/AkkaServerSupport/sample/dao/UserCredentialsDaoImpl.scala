@@ -3,10 +3,7 @@ package com.github.BambooTuna.AkkaServerSupport.sample.dao
 import cats.data.{Kleisli, OptionT}
 import cats.effect.Resource
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
-import com.github.BambooTuna.AkkaServerSupport.sample.model.{
-  EncryptedPasswordImpl,
-  UserCredentialsImpl
-}
+import com.github.BambooTuna.AkkaServerSupport.sample.model.UserCredentialsImpl
 import doobie.hikari.HikariTransactor
 import doobie.quill.DoobieContext
 import io.getquill.SnakeCase

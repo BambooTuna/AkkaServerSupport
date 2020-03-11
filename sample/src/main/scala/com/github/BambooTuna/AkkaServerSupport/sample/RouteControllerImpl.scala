@@ -1,7 +1,7 @@
 package com.github.BambooTuna.AkkaServerSupport.sample
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.HttpMethods.{DELETE, GET, POST}
+import akka.http.scaladsl.model.HttpMethods.{DELETE, GET, POST, PUT}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
@@ -49,7 +49,12 @@ class RouteControllerImpl(sessionSettings: JWTSessionSettings,
   override def toRoutes: Route =
     handleExceptions(defaultExceptionHandler(logger)) {
       handleRejections(defaultRejectionHandler) {
-        createRoute(monix.execution.Scheduler.Implicits.global).create
+        (
+          authenticationCodeCycleRoute(
+            monix.execution.Scheduler.Implicits.global) +
+            accountCycleRoute(monix.execution.Scheduler.Implicits.global) +
+            oauth2Route(monix.execution.Scheduler.Implicits.global)
+        ).create
       }
     }
 
@@ -76,21 +81,33 @@ class RouteControllerImpl(sessionSettings: JWTSessionSettings,
   private val lineOAuth2Controller =
     new LineOAuth2ControllerImpl(clientConfig, oauthStorage, dbSession)
 
-  def createRoute(implicit s: Scheduler): Router = {
+  def authenticationCodeCycleRoute(implicit s: Scheduler): Router = {
     Router(
-      route(POST, "signup", authenticationController.signUpRoute(dbSession)),
+      route(PUT,
+            "activate",
+            authenticationController.issueActivateCodeRoute(dbSession)),
       route(GET,
             "activate" / Segment,
             authenticationController.activateAccountRoute(dbSession)),
       route(POST,
-            "tryInit",
+            "init",
             authenticationController.tryInitializationRoute(dbSession)),
       route(GET,
             "init" / Segment,
-            authenticationController.initAccountPassword(dbSession)),
+            authenticationController.initAccountPassword(dbSession))
+    )
+  }
+
+  def accountCycleRoute(implicit s: Scheduler): Router =
+    Router(
+      route(POST, "signup", authenticationController.signUpRoute(dbSession)),
       route(POST, "signin", authenticationController.signInRoute(dbSession)),
       route(GET, "health", authenticationController.healthCheck),
-      route(DELETE, "logout", authenticationController.logout),
+      route(DELETE, "logout", authenticationController.logout)
+    )
+
+  def oauth2Route(implicit s: Scheduler): Router =
+    Router(
       route(POST,
             "oauth2" / "signin" / "line",
             lineOAuth2Controller.fetchCooperationLink),
@@ -98,6 +115,5 @@ class RouteControllerImpl(sessionSettings: JWTSessionSettings,
             "oauth2" / "signin" / "line",
             lineOAuth2Controller.authenticationFromCode(dbSession))
     )
-  }
 
 }

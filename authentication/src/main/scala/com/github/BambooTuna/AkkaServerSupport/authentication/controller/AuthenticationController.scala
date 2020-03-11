@@ -18,7 +18,6 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.{
 import com.github.BambooTuna.AkkaServerSupport.core.session.Session
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.Decoder
-import monix.eval.Task
 import monix.execution.Scheduler
 
 import scala.concurrent.Future
@@ -49,10 +48,11 @@ abstract class AuthenticationController[
           recode <- EitherT {
             authenticationUseCase.signUp(json).run(dbSession)
           }
-          _ <- EitherT[Task, AuthenticationCustomError, Unit] {
+          _ <- EitherT {
             emailAuthenticationUseCase
-              .issueActivateCode(recode.id, recode.signinId)
-              .map(Right(_))
+              .issueActivateCode(recode.id)
+              .run(dbSession.asInstanceOf[
+                emailAuthenticationUseCase.userCredentialsDao.DBSession])
           }
         } yield recode).value.runToFuture
       onSuccess(f) {
@@ -62,6 +62,24 @@ abstract class AuthenticationController[
           }
         case Left(value) => reject(value)
       }
+    }
+  }
+
+  def issueActivateCodeRoute(
+      dbSession: emailAuthenticationUseCase.userCredentialsDao.DBSession)(
+      implicit s: Scheduler): QueryP[Unit] = _ {
+    session.requiredSession {
+      case SessionToken(_, Some(_)) => complete(StatusCodes.NotFound)
+      case SessionToken(userId, None) =>
+        val f: Future[Either[AuthenticationCustomError, Unit]] =
+          emailAuthenticationUseCase
+            .issueActivateCode(userId)
+            .run(dbSession)
+            .runToFuture
+        onSuccess(f) {
+          case Right(_)    => complete(StatusCodes.OK)
+          case Left(value) => reject(value)
+        }
     }
   }
 
