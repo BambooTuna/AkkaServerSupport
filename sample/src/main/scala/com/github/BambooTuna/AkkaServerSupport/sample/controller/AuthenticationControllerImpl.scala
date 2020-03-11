@@ -20,9 +20,11 @@ import com.github.BambooTuna.AkkaServerSupport.sample.useCase.{
 import doobie.hikari.HikariTransactor
 import io.circe.generic.auto._
 import monix.eval.Task
+import org.simplejavamail.api.mailer.Mailer
 
 class AuthenticationControllerImpl(
     val dbSession: Resource[Task, HikariTransactor[Task]],
+    mailer: Mailer,
     strategy: StorageStrategy[String, String])(
     implicit session: Session[String, SessionToken])
     extends AuthenticationController[SignUpRequestJsonImpl,
@@ -32,5 +34,5 @@ class AuthenticationControllerImpl(
   override val authenticationUseCase: AuthenticationUseCaseImpl =
     new AuthenticationUseCaseImpl
   override val emailAuthenticationUseCase: EmailAuthenticationUseCaseImpl =
-    new EmailAuthenticationUseCaseImpl(strategy)
+    new EmailAuthenticationUseCaseImpl(mailer, strategy)
 }

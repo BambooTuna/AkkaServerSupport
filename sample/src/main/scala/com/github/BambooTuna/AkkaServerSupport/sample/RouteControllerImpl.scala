@@ -28,6 +28,8 @@ import com.github.BambooTuna.AkkaServerSupport.sample.controller.{
 import doobie.hikari.HikariTransactor
 import monix.eval.Task
 import monix.execution.Scheduler
+import org.simplejavamail.api.mailer.config.TransportStrategy
+import org.simplejavamail.mailer.MailerBuilder
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.ExecutionContext
@@ -51,11 +53,23 @@ class RouteControllerImpl(sessionSettings: JWTSessionSettings,
       }
     }
 
+  system.settings.config.getString("mail.host")
+
+  val mailer = MailerBuilder
+    .withSMTPServer(
+      system.settings.config.getString("mail.host"),
+      system.settings.config.getString("mail.port").toInt,
+      system.settings.config.getString("mail.username"),
+      system.settings.config.getString("mail.password")
+    )
+    .withTransportStrategy(TransportStrategy.SMTPS)
+    .buildMailer()
+
   private implicit val session: Session[String, SessionToken] =
     new DefaultSession[SessionToken](sessionSettings, sessionStorage)
 
   private val authenticationController =
-    new AuthenticationControllerImpl(dbSession, mailCodeStorage)
+    new AuthenticationControllerImpl(dbSession, mailer, mailCodeStorage)
 
   private val clientConfig: ClientConfig =
     ClientConfig.fromConfig("line", system.settings.config)
