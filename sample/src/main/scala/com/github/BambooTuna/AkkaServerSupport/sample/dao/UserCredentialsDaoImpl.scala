@@ -12,9 +12,8 @@ import doobie.quill.DoobieContext
 import io.getquill.SnakeCase
 import monix.eval.Task
 
-class UserCredentialsDaoImpl
-    extends UserCredentialsDao[Resource[Task, HikariTransactor[Task]],
-                               UserCredentialsImpl] {
+class UserCredentialsDaoImpl extends UserCredentialsDao[UserCredentialsImpl] {
+  override type DBSession = Resource[Task, HikariTransactor[Task]]
 
   val dc: DoobieContext.MySQL[SnakeCase] = new DoobieContext.MySQL(SnakeCase)
   import dc._

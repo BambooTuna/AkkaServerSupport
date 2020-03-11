@@ -15,11 +15,11 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCredentials
 import com.github.BambooTuna.AkkaServerSupport.core.serializer.JsonRecodeSerializer
 
-abstract class LinkedAuthenticationUseCase[DBSession](
+abstract class LinkedAuthenticationUseCase(
     implicit rs: JsonRecodeSerializer[RegisterLinkedUserCredentialsCommand,
                                       LinkedUserCredentials]) {
 
-  val linkedUserCredentialsDao: LinkedUserCredentialsDao[DBSession]
+  val linkedUserCredentialsDao: LinkedUserCredentialsDao
   type M[O] = linkedUserCredentialsDao.M[O]
 
   def register(command: RegisterLinkedUserCredentialsCommand)

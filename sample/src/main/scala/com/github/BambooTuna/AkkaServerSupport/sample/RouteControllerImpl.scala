@@ -64,15 +64,17 @@ class RouteControllerImpl(sessionSettings: JWTSessionSettings,
 
   def createRoute(implicit s: Scheduler): Router = {
     Router(
-      route(POST, "signup", authenticationController.signUpRoute),
+      route(POST, "signup", authenticationController.signUpRoute(dbSession)),
       route(GET,
             "activate" / Segment,
-            authenticationController.activateAccountRoute),
-      route(POST, "tryInit", authenticationController.tryInitializationRoute),
+            authenticationController.activateAccountRoute(dbSession)),
+      route(POST,
+            "tryInit",
+            authenticationController.tryInitializationRoute(dbSession)),
       route(GET,
             "init" / Segment,
-            authenticationController.initAccountPassword),
-      route(POST, "signin", authenticationController.signInRoute),
+            authenticationController.initAccountPassword(dbSession)),
+      route(POST, "signin", authenticationController.signInRoute(dbSession)),
       route(GET, "health", authenticationController.healthCheck),
       route(DELETE, "logout", authenticationController.logout),
       route(POST,
@@ -80,7 +82,7 @@ class RouteControllerImpl(sessionSettings: JWTSessionSettings,
             lineOAuth2Controller.fetchCooperationLink),
       route(GET,
             "oauth2" / "signin" / "line",
-            lineOAuth2Controller.authenticationFromCode)
+            lineOAuth2Controller.authenticationFromCode(dbSession))
     )
   }
 

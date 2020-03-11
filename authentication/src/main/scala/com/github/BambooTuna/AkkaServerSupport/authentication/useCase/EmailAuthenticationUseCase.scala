@@ -13,10 +13,10 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredenti
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
 import monix.eval.Task
 
-abstract class EmailAuthenticationUseCase[DBSession, Record <: UserCredentials](
+abstract class EmailAuthenticationUseCase[Record <: UserCredentials](
     strategy: StorageStrategy[String, String]) {
 
-  val userCredentialsDao: UserCredentialsDao[DBSession, Record]
+  val userCredentialsDao: UserCredentialsDao[Record]
   type M[O] = userCredentialsDao.M[O]
 
   protected def generateCode: String =

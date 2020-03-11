@@ -4,7 +4,8 @@ import cats.data.{Kleisli, OptionT}
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCredentials
 import monix.eval.Task
 
-trait LinkedUserCredentialsDao[DBSession] {
+trait LinkedUserCredentialsDao {
+  type DBSession
 
   type M[O] = Kleisli[Task, DBSession, O]
 

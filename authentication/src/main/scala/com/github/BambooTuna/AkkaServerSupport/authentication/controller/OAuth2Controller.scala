@@ -42,8 +42,7 @@ import monix.eval.Task
 
 import scala.concurrent.{ExecutionContext, Future}
 
-abstract class OAuth2Controller[DBSession,
-                                CI <: ClientAuthenticationRequest,
+abstract class OAuth2Controller[CI <: ClientAuthenticationRequest,
                                 AI <: AccessTokenAcquisitionRequest,
                                 AO <: AccessTokenAcquisitionResponse](
     clientConfig: ClientConfig,
@@ -61,8 +60,7 @@ abstract class OAuth2Controller[DBSession,
 
   type QueryP[Q] = Directive[Q] => Route
 
-  val linkedAuthenticationUseCase: LinkedAuthenticationUseCase[DBSession]
-  val dbSession: DBSession
+  val linkedAuthenticationUseCase: LinkedAuthenticationUseCase
 
   private val clientAuthenticationUseCase: ClientAuthenticationUseCase[CI] =
     new ClientAuthenticationUseCase(clientConfig, cacheStorage)
@@ -78,7 +76,9 @@ abstract class OAuth2Controller[DBSession,
     }
   }
 
-  def authenticationFromCode(implicit s: Scheduler): QueryP[Unit] = _ {
+  def authenticationFromCode(
+      dbSession: linkedAuthenticationUseCase.linkedUserCredentialsDao.DBSession)(
+      implicit s: Scheduler): QueryP[Unit] = _ {
     parameterMap { m =>
       m.asJson.as[ClientAuthenticationResponse] match {
         case Right(value) =>

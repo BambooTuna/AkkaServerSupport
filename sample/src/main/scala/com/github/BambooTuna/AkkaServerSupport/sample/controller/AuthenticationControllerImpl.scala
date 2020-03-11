@@ -3,7 +3,6 @@ package com.github.BambooTuna.AkkaServerSupport.sample.controller
 import cats.effect.Resource
 import com.github.BambooTuna.AkkaServerSupport.authentication.controller.AuthenticationController
 import com.github.BambooTuna.AkkaServerSupport.authentication.session.SessionToken
-import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.EmailAuthenticationUseCase
 import com.github.BambooTuna.AkkaServerSupport.core.session.{
   Session,
   StorageStrategy
@@ -26,8 +25,7 @@ class AuthenticationControllerImpl(
     val dbSession: Resource[Task, HikariTransactor[Task]],
     strategy: StorageStrategy[String, String])(
     implicit session: Session[String, SessionToken])
-    extends AuthenticationController[Resource[Task, HikariTransactor[Task]],
-                                     SignUpRequestJsonImpl,
+    extends AuthenticationController[SignUpRequestJsonImpl,
                                      SignInRequestJsonImpl,
                                      PasswordInitializationRequestJsonImpl,
                                      UserCredentialsImpl] {
