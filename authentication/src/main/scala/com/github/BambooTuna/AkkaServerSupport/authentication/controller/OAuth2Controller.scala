@@ -42,11 +42,12 @@ import monix.eval.Task
 
 import scala.concurrent.{ExecutionContext, Future}
 
-abstract class OAuth2Controller[CI <: ClientAuthenticationRequest,
+abstract class OAuth2Controller[DBSession,
+                                CI <: ClientAuthenticationRequest,
                                 AI <: AccessTokenAcquisitionRequest,
                                 AO <: AccessTokenAcquisitionResponse](
     clientConfig: ClientConfig,
-    strategy: StorageStrategy[String, String])(
+    cacheStorage: StorageStrategy[String, String])(
     implicit system: ActorSystem,
     mat: Materializer,
     executor: ExecutionContext,
@@ -60,14 +61,14 @@ abstract class OAuth2Controller[CI <: ClientAuthenticationRequest,
 
   type QueryP[Q] = Directive[Q] => Route
 
-  val linkedAuthenticationUseCase: LinkedAuthenticationUseCase
-  val dbSession: linkedAuthenticationUseCase.linkedUserCredentialsDao.DBSession
+  val linkedAuthenticationUseCase: LinkedAuthenticationUseCase[DBSession]
+  val dbSession: DBSession
 
   private val clientAuthenticationUseCase: ClientAuthenticationUseCase[CI] =
-    new ClientAuthenticationUseCase(clientConfig, strategy)
+    new ClientAuthenticationUseCase(clientConfig, cacheStorage)
   private val accessTokenAcquisitionUseCase
     : AccessTokenAcquisitionUseCase[AI, AO] =
-    new AccessTokenAcquisitionUseCase(clientConfig, strategy)
+    new AccessTokenAcquisitionUseCase(clientConfig, cacheStorage)
 
   def fetchCooperationLink(implicit s: Scheduler): QueryP[Unit] = _ {
     val f: Future[ClientAuthenticationUseCase.ClientAuthenticationResult] =

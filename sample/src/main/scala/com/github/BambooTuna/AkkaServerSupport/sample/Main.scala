@@ -39,11 +39,15 @@ object Main extends App {
   val redisSession: StorageStrategy[String, String] =
     RedisStorageStrategy.fromConfig(system.settings.config, "session")
 
+  val redisMail: StorageStrategy[String, String] =
+    RedisStorageStrategy.fromConfig(system.settings.config, "mail")
+
   val redisOAuth: StorageStrategy[String, String] =
     RedisStorageStrategy.fromConfig(system.settings.config, "oauth2")
 
   val r = new RouteControllerImpl(sessionSettings,
                                   redisSession,
+                                  redisMail,
                                   redisOAuth,
                                   dbSession)
 

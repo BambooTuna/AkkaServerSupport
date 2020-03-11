@@ -8,18 +8,18 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.command.{
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.dao.LinkedUserCredentialsDao
 import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
-  AccountNotFoundError,
-  OAuth2CustomError,
-  AccountAlreadyExistsError
+  LinkedAccountAlreadyExistsError,
+  LinkedAccountNotFoundError,
+  OAuth2CustomError
 }
 import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCredentials
 import com.github.BambooTuna.AkkaServerSupport.core.serializer.JsonRecodeSerializer
 
-abstract class LinkedAuthenticationUseCase(
+abstract class LinkedAuthenticationUseCase[DBSession](
     implicit rs: JsonRecodeSerializer[RegisterLinkedUserCredentialsCommand,
                                       LinkedUserCredentials]) {
 
-  val linkedUserCredentialsDao: LinkedUserCredentialsDao
+  val linkedUserCredentialsDao: LinkedUserCredentialsDao[DBSession]
   type M[O] = linkedUserCredentialsDao.M[O]
 
   def register(command: RegisterLinkedUserCredentialsCommand)
@@ -28,7 +28,7 @@ abstract class LinkedAuthenticationUseCase(
       linkedUserCredentialsDao
         .insert(rs.toRecode(command))
         .map(Right(_))
-        .mapF(_.onErrorHandle(_ => Left(AccountAlreadyExistsError)))
+        .mapF(_.onErrorHandle(_ => Left(LinkedAccountAlreadyExistsError)))
     }
   }
 
@@ -37,6 +37,6 @@ abstract class LinkedAuthenticationUseCase(
     linkedUserCredentialsDao
       .resolveByServiceId(command.serviceId)
       .filter(_.serviceName == command.serviceName)
-      .toRight[OAuth2CustomError](AccountNotFoundError)
+      .toRight[OAuth2CustomError](LinkedAccountNotFoundError)
 
 }

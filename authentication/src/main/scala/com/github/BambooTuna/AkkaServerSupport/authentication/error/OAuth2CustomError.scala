@@ -8,8 +8,8 @@ case object ParseParameterFailedError extends OAuth2CustomError
 case object ParseAccessTokenAcquisitionResponseError extends OAuth2CustomError
 case object CSRFTokenForbiddenError extends OAuth2CustomError
 
-case object AccountAlreadyExistsError extends OAuth2CustomError
-case object AccountNotFoundError extends OAuth2CustomError
+case object LinkedAccountAlreadyExistsError extends OAuth2CustomError
+case object LinkedAccountNotFoundError extends OAuth2CustomError
 
 case class ParseToRegisterCommandError(message: String)
     extends OAuth2CustomError

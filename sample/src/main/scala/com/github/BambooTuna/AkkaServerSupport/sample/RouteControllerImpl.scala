@@ -34,6 +34,7 @@ import scala.concurrent.ExecutionContext
 
 class RouteControllerImpl(sessionSettings: JWTSessionSettings,
                           sessionStorage: StorageStrategy[String, String],
+                          mailCodeStorage: StorageStrategy[String, String],
                           oauthStorage: StorageStrategy[String, String],
                           dbSession: Resource[Task, HikariTransactor[Task]])(
     implicit system: ActorSystem,
@@ -54,7 +55,7 @@ class RouteControllerImpl(sessionSettings: JWTSessionSettings,
     new DefaultSession[SessionToken](sessionSettings, sessionStorage)
 
   private val authenticationController =
-    new AuthenticationControllerImpl(dbSession)
+    new AuthenticationControllerImpl(dbSession, mailCodeStorage)
 
   private val clientConfig: ClientConfig =
     ClientConfig.fromConfig("line", system.settings.config)
@@ -64,8 +65,14 @@ class RouteControllerImpl(sessionSettings: JWTSessionSettings,
   def createRoute(implicit s: Scheduler): Router = {
     Router(
       route(POST, "signup", authenticationController.signUpRoute),
+      route(GET,
+            "activate" / Segment,
+            authenticationController.activateAccountRoute),
+      route(POST, "tryInit", authenticationController.tryInitializationRoute),
+      route(GET,
+            "init" / Segment,
+            authenticationController.initAccountPassword),
       route(POST, "signin", authenticationController.signInRoute),
-      route(POST, "init", authenticationController.passwordInitializationRoute),
       route(GET, "health", authenticationController.healthCheck),
       route(DELETE, "logout", authenticationController.logout),
       route(POST,

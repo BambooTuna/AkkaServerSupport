@@ -4,7 +4,10 @@ import akka.http.javadsl.server.CustomRejection
 
 sealed trait AuthenticationCustomError extends CustomRejection
 
-sealed trait AuthenticationUseCaseError extends AuthenticationCustomError
-case object SignUpInsertError extends AuthenticationUseCaseError
-case object SignInIdOrPassWrongError extends AuthenticationUseCaseError
-case object CantFoundUserError extends AuthenticationUseCaseError
+case object AccountAlreadyExistsError extends AuthenticationCustomError
+case object SignInForbiddenError extends AuthenticationCustomError
+case object AccountNotFoundError extends AuthenticationCustomError
+case object ActivateAccountError extends AuthenticationCustomError
+
+case object InvalidActivateCodeError extends AuthenticationCustomError
+case object InvalidInitializationCodeError extends AuthenticationCustomError
