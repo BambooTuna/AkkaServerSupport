@@ -46,7 +46,7 @@ object Settings {
     Seq(
       organization := "com.github.BambooTuna",
       scalaVersion := "2.12.8",
-      version := "1.1.0-SNAPSHOT",
+      version := "1.1.1-SNAPSHOT",
       name := s"AkkaServerSupport$subName",
       publishTo := Some(Resolver.file("AkkaServerSupport",file("."))(Patterns(true, Resolver.mavenStyleBasePattern)))
     )
