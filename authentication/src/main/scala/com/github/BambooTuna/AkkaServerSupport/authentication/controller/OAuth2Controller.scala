@@ -6,11 +6,7 @@ import akka.http.scaladsl.server.{Directive, Route}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
 import cats.data.EitherT
-import com.github.BambooTuna.AkkaServerSupport.authentication.error.{
-  OAuth2CustomError,
-  ParseParameterFailedError
-}
-import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCredentials
+import com.github.BambooTuna.AkkaServerSupport.authentication.error.ParseParameterFailedError
 import com.github.BambooTuna.AkkaServerSupport.authentication.oauth2.serializer.{
   AccessTokenAcquisitionResponseParser,
   AccessTokenAcquisitionSerializer,
@@ -45,8 +41,6 @@ import scala.concurrent.{ExecutionContext, Future}
 abstract class OAuth2Controller[CI <: ClientAuthenticationRequest,
                                 AI <: AccessTokenAcquisitionRequest,
                                 AO <: AccessTokenAcquisitionResponse](
-    clientConfig: ClientConfig,
-    cacheStorage: StorageStrategy[String, String])(
     implicit system: ActorSystem,
     mat: Materializer,
     executor: ExecutionContext,
@@ -59,6 +53,9 @@ abstract class OAuth2Controller[CI <: ClientAuthenticationRequest,
     dAO: Decoder[AO]) {
 
   type QueryP[Q] = Directive[Q] => Route
+
+  val clientConfig: ClientConfig
+  val cacheStorage: StorageStrategy[String, String]
 
   val linkedAuthenticationUseCase: LinkedAuthenticationUseCase
 
@@ -76,9 +73,7 @@ abstract class OAuth2Controller[CI <: ClientAuthenticationRequest,
     }
   }
 
-  def authenticationFromCode(
-      dbSession: linkedAuthenticationUseCase.linkedUserCredentialsDao.DBSession)(
-      implicit s: Scheduler): QueryP[Unit] = _ {
+  def authenticationFromCode(implicit s: Scheduler): QueryP[Unit] = _ {
     parameterMap { m =>
       m.asJson.as[ClientAuthenticationResponse] match {
         case Right(value) =>
@@ -92,14 +87,10 @@ abstract class OAuth2Controller[CI <: ClientAuthenticationRequest,
                 registerCommand <- EitherT {
                   Task.pure(ap.parseToRegisterCommand(ao, clientConfig))
                 }
-                r <- EitherT[Task, OAuth2CustomError, LinkedUserCredentials] {
-                  linkedAuthenticationUseCase
-                    .signIn(command)
-                    .leftFlatMap(_ =>
-                      linkedAuthenticationUseCase.register(registerCommand))
-                    .value
-                    .run(dbSession)
-                }
+                r <- linkedAuthenticationUseCase
+                  .signIn(command)
+                  .leftFlatMap(_ =>
+                    linkedAuthenticationUseCase.register(registerCommand))
               } yield r
             } yield result).value.runToFuture
           onSuccess(f) {

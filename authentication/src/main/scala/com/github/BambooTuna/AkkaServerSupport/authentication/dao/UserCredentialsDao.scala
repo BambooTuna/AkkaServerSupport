@@ -5,21 +5,19 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.model.UserCredenti
 import monix.eval.Task
 
 trait UserCredentialsDao[Record <: UserCredentials] {
-  type DBSession
-  type M[O] = Kleisli[Task, DBSession, O]
 
-  def insert(record: Record): M[Record]
+  def insert(record: Record): Task[Record]
 
-  def resolveById(id: String): OptionT[M, Record]
+  def resolveById(id: String): OptionT[Task, Record]
 
-  def resolveBySigninId(signinId: String): OptionT[M, Record]
+  def resolveBySigninId(signinId: String): OptionT[Task, Record]
 
   def updatePassword(
       id: String,
-      newEncryptedPassword: Record#SigninPass#ValueType): OptionT[M, Unit]
+      newEncryptedPassword: Record#SigninPass#ValueType): OptionT[Task, Unit]
 
-  def activate(id: String, activated: Boolean): OptionT[M, Unit]
+  def activate(id: String, activated: Boolean): OptionT[Task, Unit]
 
-  def delete(id: String): OptionT[M, Unit]
+  def delete(id: String): OptionT[Task, Unit]
 
 }

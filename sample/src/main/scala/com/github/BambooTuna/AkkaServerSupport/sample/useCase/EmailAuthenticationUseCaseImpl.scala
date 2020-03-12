@@ -1,18 +1,18 @@
 package com.github.BambooTuna.AkkaServerSupport.sample.useCase
 
+import com.github.BambooTuna.AkkaServerSupport.authentication.dao.UserCredentialsDao
 import com.github.BambooTuna.AkkaServerSupport.authentication.useCase.EmailAuthenticationUseCase
 import com.github.BambooTuna.AkkaServerSupport.core.session.StorageStrategy
-import com.github.BambooTuna.AkkaServerSupport.sample.dao.UserCredentialsDaoImpl
 import com.github.BambooTuna.AkkaServerSupport.sample.model.UserCredentialsImpl
 import monix.eval.Task
 import org.simplejavamail.api.mailer.Mailer
 import org.simplejavamail.email.EmailBuilder
 
-class EmailAuthenticationUseCaseImpl(mailer: Mailer,
-                                     strategy: StorageStrategy[String, String])
-    extends EmailAuthenticationUseCase[UserCredentialsImpl](strategy) {
-  override val userCredentialsDao: UserCredentialsDaoImpl =
-    new UserCredentialsDaoImpl
+class EmailAuthenticationUseCaseImpl(
+    val userCredentialsDao: UserCredentialsDao[UserCredentialsImpl],
+    val cacheStorage: StorageStrategy[String, String],
+    mailer: Mailer,
+) extends EmailAuthenticationUseCase[UserCredentialsImpl] {
 
   override protected def sendActivateCodeTo(mail: String,
                                             code: String): Task[Unit] = {
@@ -22,7 +22,7 @@ class EmailAuthenticationUseCaseImpl(mailer: Mailer,
       .to(mail)
       .withSubject("新規ユーザー登録")
       .withPlainText(
-        s"新規登録が成功しました！\n以下リンクにアクセスして、アカウントを有効化してください。\nlocalhost:8080/activate/$code")
+        s"新規登録が成功しました！\n以下リンクにアクセスして、アカウントを有効化してください。\nhttp://localhost:8080/activate/$code")
       .buildEmail()
     Task { mailer.sendMail(email) }
   }
@@ -35,7 +35,7 @@ class EmailAuthenticationUseCaseImpl(mailer: Mailer,
       .to(mail)
       .withSubject("パスワードの初期化")
       .withPlainText(
-        s"以下リンクにアクセスして、パスワードを初期化してください。\nlocalhost:8080/init/$code")
+        s"以下リンクにアクセスして、パスワードを初期化してください。\nhttp://localhost:8080/init/$code")
       .buildEmail()
     Task { mailer.sendMail(email) }
   }

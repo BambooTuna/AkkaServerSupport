@@ -3,7 +3,6 @@ package com.github.BambooTuna.AkkaServerSupport.authentication.controller
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directive, Route}
-import cats.data.EitherT
 import com.github.BambooTuna.AkkaServerSupport.authentication.error.AuthenticationCustomError
 import com.github.BambooTuna.AkkaServerSupport.authentication.json.{
   PasswordInitializationRequestJson,
@@ -39,21 +38,12 @@ abstract class AuthenticationController[
                                                    Record]
   val emailAuthenticationUseCase: EmailAuthenticationUseCase[Record]
 
-  def signUpRoute(
-      dbSession: authenticationUseCase.userCredentialsDao.DBSession)(
-      implicit s: Scheduler): QueryP[Unit] = _ {
+  def signUpRoute(implicit s: Scheduler): QueryP[Unit] = _ {
     entity(as[SignUpRequest]) { json: SignUpRequest =>
       val f: Future[Either[AuthenticationCustomError, Record]] =
         (for {
-          recode <- EitherT {
-            authenticationUseCase.signUp(json).run(dbSession)
-          }
-          _ <- EitherT {
-            emailAuthenticationUseCase
-              .issueActivateCode(recode.id)
-              .run(dbSession.asInstanceOf[
-                emailAuthenticationUseCase.userCredentialsDao.DBSession])
-          }
+          recode <- authenticationUseCase.signUp(json)
+          _ <- emailAuthenticationUseCase.issueActivateCode(recode.id)
         } yield recode).value.runToFuture
       onSuccess(f) {
         case Right(value) =>
@@ -65,16 +55,14 @@ abstract class AuthenticationController[
     }
   }
 
-  def issueActivateCodeRoute(
-      dbSession: emailAuthenticationUseCase.userCredentialsDao.DBSession)(
-      implicit s: Scheduler): QueryP[Unit] = _ {
+  def issueActivateCodeRoute(implicit s: Scheduler): QueryP[Unit] = _ {
     session.requiredSession {
       case SessionToken(_, Some(_)) => complete(StatusCodes.NotFound)
       case SessionToken(userId, None) =>
         val f: Future[Either[AuthenticationCustomError, Unit]] =
           emailAuthenticationUseCase
             .issueActivateCode(userId)
-            .run(dbSession)
+            .value
             .runToFuture
         onSuccess(f) {
           case Right(_)    => complete(StatusCodes.OK)
@@ -83,28 +71,25 @@ abstract class AuthenticationController[
     }
   }
 
-  def activateAccountRoute(
-      dbSession: emailAuthenticationUseCase.userCredentialsDao.DBSession)(
-      implicit s: Scheduler): QueryP[Tuple1[String]] = _ { code =>
-    val f: Future[Either[AuthenticationCustomError, Unit]] =
-      emailAuthenticationUseCase
-        .activateAccount(code)
-        .run(dbSession)
-        .runToFuture
-    onSuccess(f) {
-      case Right(_)    => complete(StatusCodes.OK)
-      case Left(value) => reject(value)
-    }
+  def activateAccountRoute(implicit s: Scheduler): QueryP[Tuple1[String]] = _ {
+    code =>
+      val f: Future[Either[AuthenticationCustomError, Unit]] =
+        emailAuthenticationUseCase
+          .activateAccount(code)
+          .value
+          .runToFuture
+      onSuccess(f) {
+        case Right(_)    => complete(StatusCodes.OK)
+        case Left(value) => reject(value)
+      }
   }
 
-  def signInRoute(
-      dbSession: authenticationUseCase.userCredentialsDao.DBSession)(
-      implicit s: Scheduler): QueryP[Unit] = _ {
+  def signInRoute(implicit s: Scheduler): QueryP[Unit] = _ {
     entity(as[SignInRequest]) { json: SignInRequest =>
       val f: Future[Either[AuthenticationCustomError, Record]] =
         authenticationUseCase
           .signIn(json)
-          .run(dbSession)
+          .value
           .runToFuture
       onSuccess(f) {
         case Right(value) =>
@@ -116,15 +101,13 @@ abstract class AuthenticationController[
     }
   }
 
-  def tryInitializationRoute(
-      dbSession: emailAuthenticationUseCase.userCredentialsDao.DBSession)(
-      implicit s: Scheduler): QueryP[Unit] = _ {
+  def tryInitializationRoute(implicit s: Scheduler): QueryP[Unit] = _ {
     entity(as[PasswordInitializationRequest]) {
       json: PasswordInitializationRequest =>
         val f: Future[Either[AuthenticationCustomError, Unit]] =
           emailAuthenticationUseCase
             .issueInitializationCode(json.signInId)
-            .run(dbSession)
+            .value
             .runToFuture
         onSuccess(f) {
           case Right(_) =>
@@ -134,18 +117,17 @@ abstract class AuthenticationController[
     }
   }
 
-  def initAccountPassword(
-      dbSession: emailAuthenticationUseCase.userCredentialsDao.DBSession)(
-      implicit s: Scheduler): QueryP[Tuple1[String]] = _ { code =>
-    val f: Future[Either[AuthenticationCustomError, Unit]] =
-      emailAuthenticationUseCase
-        .initAccountPassword(code)
-        .run(dbSession)
-        .runToFuture
-    onSuccess(f) {
-      case Right(_)    => complete(StatusCodes.OK)
-      case Left(value) => reject(value)
-    }
+  def initAccountPassword(implicit s: Scheduler): QueryP[Tuple1[String]] = _ {
+    code =>
+      val f: Future[Either[AuthenticationCustomError, Unit]] =
+        emailAuthenticationUseCase
+          .initAccountPassword(code)
+          .value
+          .runToFuture
+      onSuccess(f) {
+        case Right(_)    => complete(StatusCodes.OK)
+        case Left(value) => reject(value)
+      }
   }
 
   def healthCheck: QueryP[Unit] = _ {

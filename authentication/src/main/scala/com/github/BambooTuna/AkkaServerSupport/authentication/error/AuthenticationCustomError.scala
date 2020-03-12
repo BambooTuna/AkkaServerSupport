@@ -8,6 +8,7 @@ case object AccountAlreadyExistsError extends AuthenticationCustomError
 case object SignInForbiddenError extends AuthenticationCustomError
 case object AccountNotFoundError extends AuthenticationCustomError
 case object ActivateAccountError extends AuthenticationCustomError
+case object AlreadyActivatedError extends AuthenticationCustomError
 
 case object InvalidActivateCodeError extends AuthenticationCustomError
 case object InvalidInitializationCodeError extends AuthenticationCustomError
