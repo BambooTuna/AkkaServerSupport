@@ -70,6 +70,10 @@ $ export SESSION_TOKEN=~~~
 ```
 HeaderName=`Set-Authorization`にセッショントークンがセットされた状態でレスポンスが帰ってくるのでそれを使う
 
+### アカウント有効化メール送信
+```bash
+$ curl -X PUT -H "Authorization: $SESSION_TOKEN" localhost:8080/activate -i
+```
 ### HealthCheck
 セッショントークンが有効か確認する
 HeaderName=`Authorization`にセッショントークンをセットする
@@ -80,6 +84,11 @@ $ curl -X GET localhost:8080/health -H "Authorization: $SESSION_TOKEN"
 ### LogOut
 ```bash
 $ curl -X DELETE localhost:8080/logout -H "Authorization: $SESSION_TOKEN"
+```
+
+### パスワード初期化
+```bash
+$ curl -X POST -H "Content-Type: application/json" -d '{"mail":"bambootuna@gmail.com"}' localhost:8080/init -i
 ```
 
 ### SNS連携

@@ -1,22 +1,16 @@
 package com.github.BambooTuna.AkkaServerSupport.authentication.error
 
-import akka.http.scaladsl.server.Rejection
+import akka.http.javadsl.server.CustomRejection
 
-sealed trait OAuth2CustomError extends Rejection
+sealed trait OAuth2CustomError extends CustomRejection
 case object ParseParameterFailedError extends OAuth2CustomError
 
-sealed trait AccessTokenAcquisitionUseCaseError extends OAuth2CustomError
-case object AccessTokenAcquisitionResponseFailedError
-    extends AccessTokenAcquisitionUseCaseError
-case object CSRFTokenForbiddenError extends AccessTokenAcquisitionUseCaseError
+case object ParseAccessTokenAcquisitionResponseError extends OAuth2CustomError
+case object CSRFTokenForbiddenError extends OAuth2CustomError
 
-sealed trait LinkedAuthenticationUseCaseError extends OAuth2CustomError
-case object RegisteredError extends LinkedAuthenticationUseCaseError
-case object CooperationFailureError extends LinkedAuthenticationUseCaseError
-case object AccountNotFoundError extends LinkedAuthenticationUseCaseError
+case object LinkedAccountAlreadyExistsError extends OAuth2CustomError
+case object LinkedAccountNotFoundError extends OAuth2CustomError
 
-sealed trait AccessTokenAcquisitionResponseParserError extends OAuth2CustomError
-case object ParseToRegisterCommandError
-    extends AccessTokenAcquisitionResponseParserError
-case object ParseToSignInCommandError
-    extends AccessTokenAcquisitionResponseParserError
+case class ParseToRegisterCommandError(message: String)
+    extends OAuth2CustomError
+case class ParseToSignInCommandError(message: String) extends OAuth2CustomError

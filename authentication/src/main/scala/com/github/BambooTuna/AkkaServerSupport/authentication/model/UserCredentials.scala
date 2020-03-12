@@ -6,6 +6,7 @@ trait UserCredentials {
   val id: String
   val signinId: String
   val signinPass: SigninPass
+  val activated: Boolean
 
   def doAuthenticationByPassword(inputPass: Any): Boolean
 

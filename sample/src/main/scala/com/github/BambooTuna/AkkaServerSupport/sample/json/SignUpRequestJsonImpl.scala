@@ -17,6 +17,8 @@ object SignUpRequestJsonImpl {
           id = SystemSettings.generateId(),
           signinId = json.mail,
           signinPass =
-            EncryptedPasswordImpl(json.pass).changeEncryptedPass(json.pass))
+            EncryptedPasswordImpl(json.pass).changeEncryptedPass(json.pass),
+          activated = false
+        )
     }
 }

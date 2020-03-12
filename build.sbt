@@ -30,7 +30,8 @@ lazy val sample = (project in file("sample"))
   .settings(
     libraryDependencies ++= Seq(
       MySQLConnectorJava.version,
-      Redis.client
+      Redis.client,
+      "org.simplejavamail" % "simple-java-mail" % "6.0.3"
     ) ++ `doobie-quill`.all
   )
   .dependsOn(cooperation)

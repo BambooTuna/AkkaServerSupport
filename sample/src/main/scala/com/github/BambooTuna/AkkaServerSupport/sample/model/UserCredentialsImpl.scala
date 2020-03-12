@@ -5,7 +5,8 @@ import com.github.BambooTuna.AkkaServerSupport.sample.SystemSettings
 
 case class UserCredentialsImpl(id: String,
                                signinId: String,
-                               signinPass: EncryptedPasswordImpl)
+                               signinPass: EncryptedPasswordImpl,
+                               activated: Boolean)
     extends UserCredentials {
   override type SigninPass = EncryptedPasswordImpl
 

@@ -5,16 +5,14 @@ import com.github.BambooTuna.AkkaServerSupport.authentication.model.LinkedUserCr
 import monix.eval.Task
 
 trait LinkedUserCredentialsDao {
-  type DBSession
 
-  type M[O] = Kleisli[Task, DBSession, O]
+  def insert(record: LinkedUserCredentials): Task[LinkedUserCredentials]
 
-  def insert(record: LinkedUserCredentials): M[LinkedUserCredentials]
+  def resolveById(id: String): OptionT[Task, LinkedUserCredentials]
 
-  def resolveById(id: String): OptionT[M, LinkedUserCredentials]
+  def resolveByServiceId(
+      serviceId: String): OptionT[Task, LinkedUserCredentials]
 
-  def resolveByServiceId(serviceId: String): OptionT[M, LinkedUserCredentials]
-
-  def delete(id: String): OptionT[M, Unit]
+  def delete(id: String): OptionT[Task, Unit]
 
 }
