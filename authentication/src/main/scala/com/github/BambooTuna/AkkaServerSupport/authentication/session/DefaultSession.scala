@@ -76,6 +76,27 @@ class DefaultSession[V](val settings: JWTSessionSettings,
         case None => reject(MissingHeaderRejection(settings.authHeaderName))
       }
 
+  override def optionalRequiredSession: Directive1[Option[V]] =
+    optionalHeaderValueByName(settings.authHeaderName)
+      .flatMap {
+        case Some(value) =>
+          val f =
+            (for {
+              key <- OptionT[Future, JwtClaim](
+                Future.successful(jwtDecode(value).toOption))
+              jwtId <- OptionT[Future, String](Future.successful(key.jwtId))
+              v <- OptionT[Future, String](strategy.find(jwtId))
+                .filter(_ == key.content)
+              content <- OptionT[Future, V](
+                Future.successful(ss.deserialize(v).toOption))
+            } yield content).value
+          onSuccess(f).flatMap {
+            case Some(value) => provide(Some(value))
+            case None        => reject(AuthorizationFailedRejection)
+          }
+        case None => provide(None)
+      }
+
   override def invalidateSession(): Directive0 =
     optionalHeaderValueByName(settings.authHeaderName)
       .flatMap {

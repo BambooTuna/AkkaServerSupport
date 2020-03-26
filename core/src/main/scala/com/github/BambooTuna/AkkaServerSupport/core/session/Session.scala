@@ -11,6 +11,7 @@ trait Session[K, V] {
 
   def setSession(token: V): Directive0
   def requiredSession: Directive1[V]
+  def optionalRequiredSession: Directive1[Option[V]]
   def invalidateSession(): Directive0
   def invalidateSession(value: String): Directive0
 

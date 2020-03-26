@@ -8,9 +8,9 @@ Akkaでサーバーを立てるときによく使う部分もモジュール化�
 ```
 resolvers += "Maven Repo on github" at "https://BambooTuna.github.io/AkkaServerSupport",
 libraryDependencies ++= Seq(
-  "com.github.BambooTuna" %% "akkaserversupport-core" % "1.1.1-SNAPSHOT",
-  "com.github.BambooTuna" %% "akkaserversupport-authentication" % "1.1.1-SNAPSHOT",
-  "com.github.BambooTuna" %% "akkaserversupport-cooperation" % "1.1.1-SNAPSHOT"
+  "com.github.BambooTuna" %% "akkaserversupport-core" % "1.1.2-SNAPSHOT",
+  "com.github.BambooTuna" %% "akkaserversupport-authentication" % "1.1.2-SNAPSHOT",
+  "com.github.BambooTuna" %% "akkaserversupport-cooperation" % "1.1.2-SNAPSHOT"
 )
 ```
 
